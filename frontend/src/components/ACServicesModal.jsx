@@ -39,6 +39,11 @@ export default function ACServicesModal({ isOpen, onClose }) {
 
   if (!isOpen) return null
 
+  const orderedServices = [
+    ...services.filter(service => !service.name.includes('Custom')),
+    ...services.filter(service => service.name.includes('Custom'))
+  ];
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -58,7 +63,7 @@ export default function ACServicesModal({ isOpen, onClose }) {
                   No services found in this category.
                 </p>
               ) : (
-                services.map(service => (
+                orderedServices.map(service => (
                   <ServiceCard
                     key={service._id}
                     service={{

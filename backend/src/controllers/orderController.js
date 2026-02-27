@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
 const { successResponse, errorResponse } = require('../utils/responseFormatter');
+const { ORDER_STATUS, TERMINAL_STATES } = require('../domain/orderStatusPolicy');
 
 /**
  * @desc    Create a new service request (Order)
@@ -34,7 +35,22 @@ const createOrder = async (req, res, next) => {
         'BAD_REQUEST',
         400
       );
-    }    
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const serviceDateObj = new Date(serviceDate);
+    serviceDateObj.setHours(0, 0, 0, 0);
+
+    if (serviceDateObj <= today) {
+      return errorResponse(
+        res,
+        'Service date must be at least tomorrow',
+        'INVALID_DATE',
+        400
+      );
+    }
 
     // Map services to ensure we only store allowed fields (excluding pricing)
     const orderItems = services.map((item) => ({
@@ -99,6 +115,11 @@ const cancelOrder = async (req, res, next) => {
       return errorResponse(res, 'Order not found', 'NOT_FOUND', 404);
     }
 
+    // Terminal state protection
+    if (TERMINAL_STATES.includes(order.status)) {
+      return errorResponse(res, 'Order in terminal state cannot be modified', 'INVALID_OPERATION', 400);
+    }
+
     // specific user check
     if (order.user.toString() !== req.user._id.toString()) {
       return errorResponse(
@@ -109,7 +130,7 @@ const cancelOrder = async (req, res, next) => {
       );
     }
 
-    if (order.status !== 'pending_review') {
+    if (order.status !== ORDER_STATUS.PENDING_REVIEW) {
       return errorResponse(
         res,
         'Only orders pending review can be cancelled',
@@ -118,7 +139,8 @@ const cancelOrder = async (req, res, next) => {
       );
     }
 
-    order.status = 'cancelled';
+    order.status = ORDER_STATUS.CANCELLED;
+    order.status = order.status.toLowerCase(); // defensive normalization
     const updatedOrder = await order.save();
 
     return successResponse(res, updatedOrder, 'Order cancelled successfully');
@@ -151,10 +173,20 @@ const finalizeQuote = async (req, res, next) => {
       return errorResponse(res, 'Order not found', 'NOT_FOUND', 404);
     }
 
+    // Terminal state protection
+    if (TERMINAL_STATES.includes(order.status)) {
+      return errorResponse(res, 'Order in terminal state cannot be modified', 'INVALID_OPERATION', 400);
+    }
+
+    if (order.isAmountFinalized === true) {
+      return errorResponse(res, 'Order already finalized', 'INVALID_OPERATION', 400);
+    }
+
     // Update order with final quote
     order.finalAmount = Number(finalAmount);
     order.isAmountFinalized = true;
-    order.status = 'quote_finalized';
+    order.status = ORDER_STATUS.QUOTE_FINALIZED;
+    order.status = order.status.toLowerCase(); // defensive normalization
 
     const updatedOrder = await order.save();
 

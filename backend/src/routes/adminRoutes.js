@@ -3,6 +3,8 @@ const {
   getOrders,
   updateOrderStatus,
   getUsers,
+  markOrderAsPaid,
+  markOrderAsCompleted,
 } = require('../controllers/adminController');
 
 const { finalizeQuote } = require('../controllers/orderController');
@@ -28,6 +30,11 @@ router.put('/orders/:id/status', updateOrderStatus);
 
 // 🔥 Admin finalizes pricing (new production flow)
 router.put('/orders/:id/finalize', finalizeQuote);
+
+router.put('/orders/:id/mark-paid', markOrderAsPaid);
+
+// Admin marks order as completed (new)
+router.put('/orders/:id/complete', markOrderAsCompleted);
 
 // ======================================================
 // Admin User Management

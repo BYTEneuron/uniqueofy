@@ -74,8 +74,8 @@ export default function CartPage() {
       const todayDate = new Date()
       todayDate.setHours(0, 0, 0, 0)
 
-      if (selectedDate < todayDate) {
-        newErrors.date = 'Past dates are not allowed'
+      if (selectedDate <= todayDate) {
+        newErrors.date = 'Same day bookings are not allowed'
       }
     }
     if (!formData.timeSlot) newErrors.timeSlot = 'Please select a preferred time slot'
@@ -147,15 +147,16 @@ export default function CartPage() {
     }
   }, [user])
 
-  // Get today's date for min attribute
-  const getTodayLocal = () => {
+  // Get tomorrow's date for min attribute
+  const getTomorrowLocal = () => {
     const now = new Date()
+    now.setDate(now.getDate() + 1)
     const offset = now.getTimezoneOffset()
     const local = new Date(now.getTime() - offset * 60 * 1000)
     return local.toISOString().split('T')[0]
   }
 
-  const today = getTodayLocal()
+  const tomorrow = getTomorrowLocal()
 
   return (
     <div className="cart-page">
@@ -274,7 +275,7 @@ export default function CartPage() {
           <input
             type="date"
             name="date"
-            min={today}
+            min={tomorrow}
             className="form-control"
             value={formData.date}
             onChange={handleChange}

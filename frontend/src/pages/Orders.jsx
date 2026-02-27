@@ -80,7 +80,7 @@ export default function Orders() {
         <button 
           onClick={() => navigate('/')}
           style={{
-            backgroundColor: '#1976D2',
+            backgroundColor: '#333',
             color: 'white',
             border: 'none',
             padding: '10px 20px',
@@ -171,7 +171,22 @@ export default function Orders() {
               </div>
 
               <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '20px' }}>
-                {order.isAmountFinalized && order.paymentStatus !== 'paid' ? (
+                {order.paymentStatus === 'paid' ? (
+                  <div style={{ 
+                    color: '#1B5E20', 
+                    backgroundColor: '#E8F5E9', 
+                    padding: '12px 16px', 
+                    borderRadius: '6px', 
+                    fontSize: '0.95rem',
+                  }}>
+                    <div style={{ fontWeight: '600' }}>Payment Received</div>
+                    {order.paidAt && (
+                      <div style={{ marginTop: '4px', color: '#2E7D32' }}>
+                        Paid on: {new Date(order.paidAt).toLocaleDateString()}
+                      </div>
+                    )}
+                  </div>
+                ) : order.isAmountFinalized === true && order.paymentStatus === 'unpaid' ? (
                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#333' }}>
                       To Pay: <span style={{ color: '#2E7D32' }}><span>₹{order.finalAmount}</span></span>
@@ -190,11 +205,12 @@ export default function Orders() {
                     }}
                     onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#1B5E20'}
                     onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#2E7D32'}
+                    onClick={() => navigate(`/payment/${order._id}`)}
                     >
                       Proceed to Payment
                     </button>
                    </div>
-                ) : order.status === 'pending_review' ? (
+                ) : !order.isAmountFinalized ? (
                   <div style={{ 
                     color: '#0277BD', 
                     backgroundColor: '#E1F5FE', 

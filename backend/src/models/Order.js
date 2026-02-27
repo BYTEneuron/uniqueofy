@@ -58,8 +58,6 @@ const orderSchema = new mongoose.Schema(
         'pending_review',      // user placed booking
         'quote_in_progress',   // admin reviewing
         'quote_finalized',     // amount decided
-        'payment_pending',     // waiting for payment
-        'paid',                // payment done
         'completed',
         'cancelled',
       ],
@@ -87,6 +85,11 @@ const orderSchema = new mongoose.Schema(
     },
 
     paidAt: {
+      type: Date,
+      default: null,
+    },
+
+    completedAt: {
       type: Date,
       default: null,
     },

@@ -30,6 +30,18 @@ export default function WaterTankServicesModal({ isOpen, onClose }) {
 
   if (!isOpen) return null
 
+  const normalServices = services.filter(service => !service.name.includes('Custom'));
+  normalServices.sort((a, b) => {
+    const numA = parseInt(a.name.match(/\d+/)?.[0] || 0);
+    const numB = parseInt(b.name.match(/\d+/)?.[0] || 0);
+    return numA - numB;
+  });
+
+  const orderedServices = [
+    ...normalServices,
+    ...services.filter(service => service.name.includes('Custom'))
+  ];
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -47,7 +59,7 @@ export default function WaterTankServicesModal({ isOpen, onClose }) {
               {services.length === 0 ? (
                  <p style={{ textAlign: 'center', width: '100%' }}>No services found in this category.</p>
               ) : (
-                services.map((service) => (
+                orderedServices.map((service) => (
                   <ServiceCard
                     key={service._id}
                     service={{
