@@ -23,7 +23,7 @@ export default function Cart() {
     <div className="cart-section">
       <h3>
         <img src={cartIcon} alt="" className="cart-header-icon" />
-        Your Cart ({cart.length} items)
+        Your Cart ({cart.length} {cart.length === 1 ? 'item' : 'items'})
       </h3>
       
       <div className="cart-items">
@@ -31,7 +31,7 @@ export default function Cart() {
           <div key={item.id} className="cart-item">
             <div className="cart-item-info">
               <h4>{item.name}</h4>
-              <p>Price discussed on call</p>
+              <p>Price will be discussed</p>
             </div>
 
             <div className="cart-item-controls">

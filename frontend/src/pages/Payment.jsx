@@ -1,13 +1,22 @@
 import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useEffect } from 'react';
 
 export default function Payment() {
   const navigate = useNavigate();
   const { orderId } = useParams();
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { next: `/payment/${orderId}` } });
+    }
+  }, [isAuthenticated, navigate, orderId]);
 
   const shortOrderId = orderId ? orderId.slice(-6).toUpperCase() : 'N/A';
 
   return (
-    <div style={{ maxWidth: '600px', margin: '40px auto', padding: '0 20px', fontFamily: 'Arial, sans-serif' }}>
+    <div style={{ maxWidth: '600px', margin: '40px auto', padding: '0 20px' }}>
       <div
         style={{
           backgroundColor: '#fff',

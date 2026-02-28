@@ -6,6 +6,7 @@ export default function ServiceCard({
   showQuantity = false,
   quantity = 1,
   onQuantityChange,
+  className = '',
 }) {
   const { addToCart } = useCart()
 
@@ -20,7 +21,7 @@ export default function ServiceCard({
   }
 
   return (
-    <div className="service-card-modern">
+    <div className={`service-card-modern ${className}`}>
       <div className="service-image-wrapper">
         <img
           src={service.image}

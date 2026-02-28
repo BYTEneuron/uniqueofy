@@ -90,7 +90,7 @@ export default function CartPage() {
     // Assuming context provides isAuthenticated as per AuthContext code read earlier
     if (!isAuthenticated) { 
       localStorage.setItem('pendingBookingForm', JSON.stringify(formData))
-      navigate('/login', { state: { from: location.pathname } })
+      navigate('/login', { state: { next: location.pathname } })
       return
     }
 

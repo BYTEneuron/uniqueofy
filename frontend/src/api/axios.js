@@ -87,7 +87,8 @@ api.interceptors.response.use(
 
         localStorage.removeItem('uniqueofy_access_token');
 
-        window.location.href = '/login';
+        // Dispatch event so AuthContext can handle the redirect gracefully
+        window.dispatchEvent(new Event('auth:session-expired'));
 
         return Promise.reject(refreshError);
       } finally {

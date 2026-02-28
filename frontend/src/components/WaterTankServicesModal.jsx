@@ -2,31 +2,58 @@ import { useState, useEffect } from 'react'
 import api from '../api/axios'
 import ServiceCard from './ServiceCard'
 import './categoryModal.css'
-import defaultImage from '../assets/images/services/tank-1000l.webp'
+import tank500lImg from '../assets/images/services/tank-500l.webp'
+import tank1000lImg from '../assets/images/services/tank-1000l.webp'
+import tank2000lImg from '../assets/images/services/tank-2000l.webp'
+import tankCustomImg from '../assets/images/services/tank-custom.webp'
+
+// Map service names to local images
+const IMAGE_MAP = {
+  '500L Water Tank Cleaning': tank500lImg,
+  '1000L Water Tank Cleaning': tank1000lImg,
+  '2000L Water Tank Cleaning': tank2000lImg,
+  'Custom Size Water Tank': tankCustomImg,
+}
+
+function getServiceImage(service) {
+  // Try exact name match first
+  if (IMAGE_MAP[service.name]) return IMAGE_MAP[service.name]
+  // Partial match by size number
+  const sizeMatch = service.name.match(/(\d+)L/i)
+  if (sizeMatch) {
+    const key = Object.keys(IMAGE_MAP).find(k => k.includes(sizeMatch[1] + 'L'))
+    if (key) return IMAGE_MAP[key]
+  }
+  // Custom fallback
+  if (service.name.toLowerCase().includes('custom')) return tankCustomImg
+  return tank1000lImg
+}
 
 export default function WaterTankServicesModal({ isOpen, onClose }) {
   const [quantities, setQuantities] = useState({})
   const [services, setServices] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [hasFetched, setHasFetched] = useState(false)
 
   useEffect(() => {
-    if (isOpen) {
-      setLoading(true)
-      api.get('/services')
-        .then(res => {
-            const allServices = res.data.data || []
-            const filtered = allServices.filter(s => s.category === 'water_tank'&& s.isActive !== false)
-            setServices(filtered)
-            setLoading(false)
-        })
-        .catch(err => {
-            console.error("Failed to fetch services", err)
-            setError("Failed to load services")
-            setLoading(false)
-        })
-    }
-  }, [isOpen])
+    if (!isOpen || hasFetched) return
+
+    setLoading(true)
+    api.get('/services')
+      .then(res => {
+          const allServices = res.data.data || []
+          const filtered = allServices.filter(s => s.category === 'water_tank'&& s.isActive !== false)
+          setServices(filtered)
+          setHasFetched(true)
+          setLoading(false)
+      })
+      .catch(err => {
+          console.error("Failed to fetch services", err)
+          setError("Failed to load services")
+          setLoading(false)
+      })
+  }, [isOpen, hasFetched])
 
   if (!isOpen) return null
 
@@ -65,14 +92,9 @@ export default function WaterTankServicesModal({ isOpen, onClose }) {
                     service={{
                         ...service,
                         id: service._id,
-                        image: service.image || defaultImage
+                        image: getServiceImage(service)
                     }}
-                    showQuantity={true} // Defaulting to true as per previous logic logic? Old logic: !service.isCustom
-                    // Actually, let's keep logic: !service.isCustom
-                    // But backend might not have isCustom flag. 
-                    // Let's assume false or check if valid flag exists.
-                    // For now, I'll use !service.isCustom (if backend sends it) or true.
-                    // Note: original WaterTank logic was: showQuantity={!service.isCustom}
+                    showQuantity={!service.isCustom}
                     quantity={quantities[service._id] || 1}
                     onQuantityChange={(qty) =>
                       setQuantities(prev => ({ ...prev, [service._id]: qty }))

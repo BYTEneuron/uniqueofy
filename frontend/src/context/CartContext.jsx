@@ -36,14 +36,6 @@ export function CartProvider({ children }) {
     }
   }
 
-  const getTotal = () => {
-    return cart.reduce((total, item) => total + (item.price || 0) * item.quantity, 0)
-  }
-
-  const getCartCount = () => {
-    return cart.reduce((count, item) => count + item.quantity, 0)
-  }
-
   const getServiceCount = () => {
     return cart.length
   }
@@ -52,31 +44,13 @@ export function CartProvider({ children }) {
     setCart([])
   }
 
-  const addOrder = (customerDetails) => {
-    const newOrder = {
-        id: Date.now(),
-        items: cart,
-        customer: customerDetails,
-        orderDate: new Date().toISOString(),
-        status: 'Pending Quote', 
-        totalAmount: 0 
-    }
-    const existingOrders = JSON.parse(localStorage.getItem('uniqueofy_orders') || '[]')
-    localStorage.setItem('uniqueofy_orders', JSON.stringify([newOrder, ...existingOrders]))
-    clearCart()
-    return newOrder
-  }
-
   const value = useMemo(() => ({
       cart,
       addToCart,
       removeFromCart,
       updateQuantity,
-      getTotal,
-      getCartCount,
       getServiceCount,
       clearCart,
-      addOrder
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [cart])
 

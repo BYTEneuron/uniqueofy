@@ -57,7 +57,7 @@ export default function ProfileModal({ isOpen, onClose }) {
         </div>
 
         <div style={{ marginTop: '30px', textAlign: 'center', color: '#888', fontSize: '0.8rem' }}>
-           Member since {new Date().getFullYear()}
+           Member since {user.createdAt ? new Date(user.createdAt).getFullYear() : new Date().getFullYear()}
         </div>
 
       </div>

@@ -1,0 +1,95 @@
+IMAGE SPECIFICATIONS FOR UNIQUEOFY WEBAPP
+==========================================
+
+All images needed for the webpage, with display context, dimensions, and file size recommendations.
+
+
+1. LOGOS
+--------
+| #  | Image                 | Location              | Display Size (px) | Recommended Dimensions (px) | Max Size | Format |
+|----|-----------------------|-----------------------|--------------------|-----------------------------|----------|--------|
+| 1  | uniqueofy-logo.svg    | Header (brand logo)   | 32h x auto w       | 64 x 64 (2x retina)         | 5 KB     | SVG    |
+
+
+2. ICONS
+--------
+| #  | Image            | Location                          | Display Size (px) | Recommended Dimensions (px) | Max Size | Format |
+|----|------------------|-----------------------------------|--------------------|-----------------------------|----------|--------|
+| 2  | cart.svg         | Header cart button + Cart heading  | 24 x 24           | 48 x 48 (2x retina)         | 3 KB     | SVG    |
+| 3  | instagram.svg    | Footer social link                 | 24 x 24           | 48 x 48 (2x retina)         | 3 KB     | SVG    |
+| 4  | facebook.svg     | Footer social link                 | 24 x 24           | 48 x 48 (2x retina)         | 3 KB     | SVG    |
+
+
+3. CATEGORY CARDS (Home Page)
+-----------------------------
+Displayed inside .category-card at 64x64 px (object-fit: contain), card width ~280-600px with 40px padding, centered.
+
+| #  | Image              | Location                          | Display Size (px) | Recommended Dimensions (px) | Max Size  | Format |
+|----|--------------------|-----------------------------------|--------------------|-----------------------------|-----------|--------|
+| 5  | ac.webp            | Home -> AC Services category card  | 64 x 64           | 128 x 128 (2x retina)       | 15-20 KB  | WebP   |
+| 6  | water-tank.webp    | Home -> Water Tank category card   | 64 x 64           | 128 x 128 (2x retina)       | 15-20 KB  | WebP   |
+
+
+4. SERVICE CARDS (Inside Modals)
+--------------------------------
+Displayed inside .service-image-wrapper (140px tall container) at 64x64 px (object-fit: contain).
+Modal grid uses minmax(200px, 1fr) columns inside a 700px-wide modal.
+
+| #   | Image                | Location                          | Display Size (px) | Recommended Dimensions (px) | Max Size  | Format |
+|-----|----------------------|-----------------------------------|--------------------|-----------------------------|-----------|--------|
+| 7   | ac-servicing.webp    | AC Services modal -> service card  | 64 x 64           | 128 x 128 (2x retina)       | 15-20 KB  | WebP   |
+| 8   | ac-installation.webp | AC Services modal -> service card  | 64 x 64           | 128 x 128 (2x retina)       | 15-20 KB  | WebP   |
+| 9   | ac-custom.webp       | AC Services modal -> service card  | 64 x 64           | 128 x 128 (2x retina)       | 15-20 KB  | WebP   |
+| 10  | tank-500l.webp       | Water Tank modal -> service card   | 64 x 64           | 128 x 128 (2x retina)       | 15-20 KB  | WebP   |
+| 11  | tank-1000l.webp      | Water Tank modal -> service card   | 64 x 64           | 128 x 128 (2x retina)       | 15-20 KB  | WebP   |
+| 12  | tank-2000l.webp      | Water Tank modal -> service card   | 64 x 64           | 128 x 128 (2x retina)       | 15-20 KB  | WebP   |
+| 13  | tank-custom.webp     | Water Tank modal -> service card   | 64 x 64           | 128 x 128 (2x retina)       | 15-20 KB  | WebP   |
+
+
+5. CART PAGE (Checkout)
+-----------------------
+Service images shown beside each cart item at 80x80 px (object-fit: contain, border-radius: 8px).
+Same 7 service images above are reused here at a larger display size.
+
+Since cart page displays at 80x80 (larger than 64x64 in modals), all 7 service images + 2 category images
+should be at least 160x160 px to cover both use cases with retina support.
+
+
+6. FAVICON
+----------
+| #   | Image                       | Location         | Display Size (px)  | Recommended Dimensions (px) | Max Size | Format  |
+|-----|-----------------------------|------------------|--------------------|-----------------------------|----------|---------|
+| 14  | favicon (replace vite.svg)  | Browser tab       | 16x16 / 32x32     | 32 x 32 (multi-size .ico)   | 5 KB     | SVG/ICO |
+
+
+======================
+FINAL SUMMARY TABLE
+======================
+
+| Image File            | Where Used              | Prepare At (W x H px) | Max Size (KB) | Format |
+|-----------------------|-------------------------|------------------------|---------------|--------|
+| uniqueofy-logo.svg    | Header                  | 64 x 64                | 5             | SVG    |
+| cart.svg              | Header, Cart heading    | 48 x 48                | 3             | SVG    |
+| instagram.svg         | Footer                  | 48 x 48                | 3             | SVG    |
+| facebook.svg          | Footer                  | 48 x 48                | 3             | SVG    |
+| ac.webp               | Home category card      | 160 x 160              | 20            | WebP   |
+| water-tank.webp       | Home category card      | 160 x 160              | 20            | WebP   |
+| ac-servicing.webp     | Modal + Cart page       | 160 x 160              | 20            | WebP   |
+| ac-installation.webp  | Modal + Cart page       | 160 x 160              | 20            | WebP   |
+| ac-custom.webp        | Modal + Cart page       | 160 x 160              | 20            | WebP   |
+| tank-500l.webp        | Modal + Cart page       | 160 x 160              | 20            | WebP   |
+| tank-1000l.webp       | Modal + Cart page       | 160 x 160              | 20            | WebP   |
+| tank-2000l.webp       | Modal + Cart page       | 160 x 160              | 20            | WebP   |
+| tank-custom.webp      | Modal + Cart page       | 160 x 160              | 20            | WebP   |
+| favicon               | Browser tab             | 32 x 32                | 5             | SVG/ICO|
+
+TOTAL: 14 images (4 SVG icons/logos + 9 WebP content images + 1 favicon)
+
+
+======================
+KEY NOTES
+======================
+- All WebP images use object-fit: contain, so they should be SQUARE (1:1) with transparent or matching background.
+- 160x160 px covers the largest display (80x80 on cart page) at 2x retina density.
+- Keep WebP images under 20 KB each for fast page loads (~180 KB total for all images).
+- SVGs are resolution-independent, so exact pixel dimensions don't matter -- just keep file size small.

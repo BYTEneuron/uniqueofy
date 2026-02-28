@@ -1,22 +1,30 @@
-import { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 
 const AuthContext = createContext();
 
+// Normalize user object so both 'id' and '_id' are always available,
+// regardless of whether the data came from verifyOtp (id) or getMe (_id).
+function normalizeUser(u) {
+  if (!u) return u;
+  return { ...u, id: u.id || u._id, _id: u._id || u.id };
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigate = useNavigate();
 
   // Initialize from local storage
 useEffect(() => {
   const token = localStorage.getItem('uniqueofy_access_token');
 
   if (token) {
-    setIsAuthenticated(true);
-
     api.get('/auth/me')
       .then(res => {
-        setUser(res.data.data);
+        setUser(normalizeUser(res.data.data));
+        setIsAuthenticated(true);
       })
       .catch(() => {
         localStorage.removeItem('uniqueofy_access_token');
@@ -26,9 +34,18 @@ useEffect(() => {
   }
 }, []);
 
+  // Listen for session-expired events from axios interceptor
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      setUser(null);
+      setIsAuthenticated(false);
+      navigate('/login', { replace: true });
+    };
+    window.addEventListener('auth:session-expired', handleSessionExpired);
+    return () => window.removeEventListener('auth:session-expired', handleSessionExpired);
+  }, [navigate]);
 
-
-  const sendOtp = async (phone) => {
+  const sendOtp = useCallback(async (phone) => {
     try {
       await api.post('/auth/send-otp', { phone });
       return { success: true };
@@ -42,19 +59,20 @@ useEffect(() => {
         data: error.response?.data?.data || null,
       };
     }
-  };
+  }, []);
 
-  const verifyOtp = async (phone, otp) => {
+  const verifyOtp = useCallback(async (phone, otp) => {
     try {
       const response = await api.post('/auth/verify-otp', { phone, otp });
       // Backend returns: { success: true, message: '...', data: { accessToken, user } }
       const { accessToken, user: userData } = response.data.data;
 
       localStorage.setItem('uniqueofy_access_token', accessToken);
-      setUser(userData);
+      const normalized = normalizeUser(userData);
+      setUser(normalized);
       setIsAuthenticated(true);
 
-      return { success: true, user: userData };
+      return { success: true, user: normalized };
     } catch (error) {
       console.error('Verify OTP failed:', error);
       return { 
@@ -62,9 +80,9 @@ useEffect(() => {
         message: error.response?.data?.message || 'Failed to verify OTP' 
       };
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await api.post('/auth/logout');
     } catch (error) {
@@ -74,11 +92,11 @@ useEffect(() => {
       setUser(null);
       setIsAuthenticated(false);
     }
-  };
+  }, []);
 
-  const updateUser = (updatedUser) => {
-  setUser(updatedUser);
-  };
+  const updateUser = useCallback((updatedUser) => {
+  setUser(normalizeUser(updatedUser));
+  }, []);
 
   const value = useMemo(() => ({
     user,
@@ -87,7 +105,7 @@ useEffect(() => {
     verifyOtp,
     logout,
     updateUser
-  }), [user, isAuthenticated]);
+  }), [user, isAuthenticated, sendOtp, verifyOtp, logout, updateUser]);
 
   return (
     <AuthContext.Provider value={value}>

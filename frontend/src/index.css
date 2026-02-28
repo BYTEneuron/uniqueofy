@@ -13,7 +13,6 @@
   -moz-osx-font-smoothing: grayscale;
 
   --logo-scale: 1;
-  --service-img-scale: 1;
   --category-img-scale: 1;
 }
 
@@ -34,6 +33,19 @@
   height: 80vh;
   font-size: 1.2rem;
   color: #666;
+}
+
+.loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e0e0e0;
+  border-top-color: #333;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 a {

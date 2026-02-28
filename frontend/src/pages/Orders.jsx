@@ -96,7 +96,7 @@ export default function Orders() {
   }
 
   return (
-    <div style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px', fontFamily: 'Arial, sans-serif' }}>
+    <div style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px' }}>
       <h1 style={{ marginBottom: '30px', textAlign: 'center', color: '#333' }}>My Bookings</h1>
       
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -128,7 +128,7 @@ export default function Orders() {
                   color: statusColors.text,
                   border: `1px solid ${statusColors.text}`
                 }}>
-                  {order.status}
+                  {formatStatus(order.status)}
                 </div>
               </div>
 
@@ -272,6 +272,18 @@ function formatAddress(addr) {
   ].filter(Boolean).join(', ') || 'Address details unavailable';
 }
 
+// Helper to format raw status to human-readable label
+function formatStatus(status) {
+  const STATUS_LABELS = {
+    pending_review: 'Pending Review',
+    quote_in_progress: 'Quote In Progress',
+    quote_finalized: 'Quote Finalized',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+  };
+  return STATUS_LABELS[status] || status;
+}
+
 // Helper for status badge colors
 function getStatusColor(status) {
   switch (status) {
@@ -283,9 +295,6 @@ function getStatusColor(status) {
 
     case 'quote_finalized':
       return { bg: '#E8F5E9', text: '#2E7D32' };
-
-    case 'paid':
-      return { bg: '#E8F5E9', text: '#1B5E20' };
 
     case 'completed':
       return { bg: '#E8F5E9', text: '#2E7D32' };
