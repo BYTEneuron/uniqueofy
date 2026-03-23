@@ -14,6 +14,7 @@ const CartPage = lazy(() => import('./pages/CartPage'))
 const Login = lazy(() => import('./pages/Login'))
 const VerifyOtp = lazy(() => import('./pages/VerifyOtp'))
 const ProfileSetup = lazy(() => import('./pages/ProfileSetup'))
+const ModelInfo = lazy(() => import('./pages/ModelInfo'))
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/verify-otp" element={<VerifyOtp />} />
                 <Route path="/profile-setup" element={<ProfileSetup />} />
+                <Route path="/model-info" element={<ModelInfo />} />
               </Routes>
             </Suspense>
           </main>
