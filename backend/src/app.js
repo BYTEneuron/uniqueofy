@@ -13,7 +13,6 @@ const authRoutes = require('./routes/authRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const serviceRoutes = require('./routes/serviceRoutes');
 const adminRoutes = require('./routes/adminRoutes');
-const modelRoutes = require('./routes/modelRoutes');
 
 const app = express();
 
@@ -48,7 +47,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/model', modelRoutes);
 
 app.get('/', (req, res) => {
   res.send('UNIQUEOFY API is running...');
