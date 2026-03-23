@@ -232,10 +232,14 @@ const logout = async (req, res, next) => {
     const refreshToken = req.cookies.refreshToken;
 
     if (refreshToken) {
-      const decoded = jwt.decode(refreshToken);
+      try {
+        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
 
-      if (decoded?.id) {
-        await User.findByIdAndUpdate(decoded.id, { refreshToken: null });
+        if (decoded?.id) {
+          await User.findByIdAndUpdate(decoded.id, { refreshToken: null });
+        }
+      } catch (err) {
+        // If token is invalid or expired, proceed to clear cookie anyway
       }
     }
 

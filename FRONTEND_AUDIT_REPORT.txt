@@ -1,322 +1,207 @@
 ================================================================================
-                    UNIQUEOFY FRONTEND STATIC AUDIT REPORT v3
+                   UNIQUEOFY FRONTEND AUDIT REPORT v4 (FULL)
 ================================================================================
-Date: Re-audit after all v2 fixes applied
+Date: March 23, 2026
 Auditor: GitHub Copilot
-Scope: All frontend source files (React 18 + Vite + React Router v6)
+Scope: Entire frontend folder (`frontend/`) including JSX/JS/CSS/config/HTML
 
 ================================================================================
 0. EXECUTIVE SUMMARY
 ================================================================================
-Files Audited: 20 source files (JSX, JS, CSS)
+Files Audited: 32 frontend source/config files
 Critical Issues: 0
-Medium Issues: 0
-Low Issues: 7
-Info/Observations: 6
+High Issues: 0
+Medium Issues: 6
+Low Issues: 10
+Info/Observations: 7
 
-Status: HEALTHY — No critical or blocking issues remain. The codebase is
-well-structured, secure, and follows React best practices. The remaining
-items are minor polish and UX enhancements.
-
-================================================================================
-1. APP STRUCTURE & ROUTING (App.jsx)
-================================================================================
-[OK] ErrorBoundary wraps entire app tree
-[OK] Provider nesting order correct: AuthProvider > CartProvider
-[OK] All 8 page routes defined + wildcard 404 catch-all
-[OK] Lazy loading on all page components (code splitting)
-[OK] Suspense fallback uses CSS spinner (not text), accessible
-[OK] NotFound component renders 404 page with link to home
-[OK] Header and Footer rendered outside Suspense (always visible)
-
-Issues: None
+Overall Status: FUNCTIONAL BUT NOT "HEALTHY"
+- Production build passes (`npm run build` successful)
+- Lint fails (`npm run lint` returns 6 errors + 2 warnings)
+- Prior report status claiming zero medium issues is outdated
 
 ================================================================================
-2. AUTHENTICATION CONTEXT (AuthContext.jsx)
+1. AUTOMATED CHECK RESULTS
 ================================================================================
-[OK] createContext + useAuth custom hook with guard
-[OK] isAuthenticated only set TRUE after /auth/me succeeds (no race condition)
-[OK] All 4 functions wrapped in useCallback (sendOtp, verifyOtp, logout, updateUser)
-[OK] useMemo value object with complete dependency array
-[OK] Token stored in localStorage as 'uniqueofy_access_token'
-[OK] Session-expired event listener for graceful redirect
-[OK] Logout clears token + resets state in finally block
-[OK] sendOtp returns structured error with status/data for rate limiting
+1.1 Build Check
+- Command: `npm run build`
+- Result: PASS
+- Notes: Output bundles generated successfully with no compile-time failures.
 
-Issues: None
+1.2 Lint Check
+- Command: `npm run lint`
+- Result: FAIL
+- Issues reported by ESLint: 8
 
-================================================================================
-3. CART CONTEXT (CartContext.jsx)
-================================================================================
-[OK] Dead methods removed (addOrder, getTotal, getCartCount)
-[OK] 5 clean methods: addToCart, removeFromCart, updateQuantity, getServiceCount, clearCart
-[OK] useMemo on context value with [cart] dependency
-[OK] useCart custom hook with guard
-[OK] addToCart handles both new and existing items
-[OK] updateQuantity removes item when quantity <= 0
+[MEDIUM-L1] Lint error: unused parameter in ErrorBoundary
+- File: `src/components/ErrorBoundary.jsx`
+- Rule: `no-unused-vars`
+- Detail: `getDerivedStateFromError(error)` does not use `error`.
 
-Issues: None
+[MEDIUM-L2] Lint error: setState directly inside effect body
+- File: `src/components/WaterTankServicesModal.jsx`
+- Rule: `react-hooks/set-state-in-effect`
+- Detail: `setLoading(true)` is called synchronously in `useEffect`.
 
-================================================================================
-4. AXIOS INTERCEPTOR (api/axios.js)
-================================================================================
-[OK] BASE_URL from env with localhost fallback
-[OK] withCredentials: true for cookie support
-[OK] Request interceptor attaches Bearer token
-[OK] Response interceptor handles 401 with refresh
-[OK] Mutex pattern prevents concurrent refresh calls
-[OK] Subscriber queue replays failed requests after refresh
-[OK] Refresh failure dispatches 'auth:session-expired' event (no hard redirect)
-[OK] Skips refresh for /auth/refresh endpoint (prevents infinite loop)
-[OK] _retry flag prevents infinite retry loops
+[MEDIUM-L3] Lint error: fast refresh rule violation
+- File: `src/context/AuthContext.jsx`
+- Rule: `react-refresh/only-export-components`
+- Detail: exports component and hook/helper patterns from same file.
 
-Issues: None
+[MEDIUM-L4] Lint error: fast refresh rule violation
+- File: `src/context/CartContext.jsx`
+- Rule: `react-refresh/only-export-components`
+- Detail: exports component and hook from same file under current lint config.
 
-================================================================================
-5. HOME PAGE (Home.jsx)
-================================================================================
-[OK] Uses onKeyDown (not deprecated onKeyPress)
-[OK] Category cards have role="button" and tabIndex={0} for accessibility
-[OK] openModal useEffect reads location.state and clears it after use
-[OK] Cart component rendered on home page
-[OK] Both modal components mounted (ACServicesModal, WaterTankServicesModal)
+[MEDIUM-L5] Lint error: unused variable
+- File: `src/pages/ProfileSetup.jsx`
+- Rule: `no-unused-vars`
+- Detail: `user` is destructured from auth context but unused.
 
-Issues: None
+[MEDIUM-L6] Lint error: unused variable
+- File: `src/pages/VerifyOtp.jsx`
+- Rule: `no-unused-vars`
+- Detail: `isAuthenticated` is destructured but unused.
 
-================================================================================
-6. ORDERS PAGE (Orders.jsx)
-================================================================================
-[OK] Auth guard redirects to /login if not authenticated
-[OK] formatStatus() maps all 5 backend statuses to human-readable labels
-[OK] getStatusColor() covers all 5 backend statuses + graceful default
-[OK] No invalid 'paid' status color case (removed in v2)
-[OK] Cancel button only shown for 'pending_review' status
-[OK] Cancel uses optimistic UI update (local state update after API)
-[OK] Disables cancel button during cancellation (cancellingId pattern)
-[OK] Payment section handles 3 states: paid, unpaid+finalized, not-finalized
-[OK] Order ID display uses monospace font for hash
-[OK] No inline fontFamily overrides on body text
-[OK] formatAddress handles string, object, and null cases
+[LOW-W1] Lint warning: hook dependency expression is non-static/complex
+- File: `src/pages/Login.jsx`
+- Rule: `react-hooks/exhaustive-deps`
+- Detail: dependency array uses expression `[cooldown > 0]` and misses `cooldown`.
 
-Issues: None
+[LOW-W2] Lint warning: missing dependency in cooldown effect
+- File: `src/pages/Login.jsx`
+- Rule: `react-hooks/exhaustive-deps`
+- Detail: `cooldown` not included explicitly in effect dependencies.
 
 ================================================================================
-7. CART PAGE (CartPage.jsx)
+2. FUNCTIONAL / LOGIC FINDINGS
 ================================================================================
-[OK] Redirect key uses 'next' (matches Login.jsx expectation)
-[OK] Form validation covers: fullName, mobile, address, date, timeSlot
-[OK] Same-day booking prevention (selectedDate <= today)
-[OK] Pre-fills user data from AuthContext (name + phone)
-[OK] Pending form data saved to/restored from localStorage
-[OK] Order payload maps cart items correctly (serviceId, name, quantity)
-[OK] Clears cart and localStorage after successful submission
-[OK] Quantity selector hidden for custom services (!item.isCustom)
-[OK] "Price will be discussed" text (standardized)
-[OK] Name/phone fields disabled when user is logged in
-[OK] Shows submission error to user
-[OK] Mobile input restricted to digits only, max 10
-[OK] Name input restricted to letters and spaces only
+[LOW-F1] Cart state update pattern can drop rapid sequential updates
+- File: `src/context/CartContext.jsx`
+- Detail: `setCart(cart.map(...))` and `setCart([...cart, ...])` rely on closed-over `cart`.
+- Risk: fast repeated clicks or batched updates can produce stale-state behavior.
 
-Issues: None
+[LOW-F2] 404 "Go Home" uses hard anchor reload instead of SPA navigation
+- File: `src/App.jsx`
+- Detail: `<a href="/">` triggers full page refresh.
+- Risk: unnecessary hard reload and state loss.
 
-================================================================================
-8. LOGIN PAGE (Login.jsx)
-================================================================================
-[OK] OTP cooldown persisted in localStorage (survives page refresh)
-[OK] Rate limit handling (status 429, retryAfter from response)
-[OK] Redirect authenticated users away from login page
-[OK] Passes 'next' path through to VerifyOtp via location.state
-[OK] Mobile input restricted to digits, max 10
-[OK] Loading state disables send button
+[LOW-F3] Scroll behavior uses non-standard value
+- File: `src/components/ScrollToTop.jsx`
+- Detail: `window.scrollTo({ behavior: 'instant' })` uses a non-standard behavior value.
+- Risk: browser inconsistency; typically `auto`/`smooth` are expected values.
 
-Issues: None
+[LOW-F4] Protected routes rely on in-page redirects only
+- Files: `src/pages/Orders.jsx`, `src/pages/Payment.jsx`, `src/pages/ProfileSetup.jsx`
+- Detail: auth checks happen after page component mounts via `useEffect`.
+- Risk: brief flash of protected content/layout before redirect in some cases.
 
-================================================================================
-9. VERIFY OTP PAGE (VerifyOtp.jsx)
-================================================================================
-[OK] Redirects to /login if no phone in location.state
-[OK] OTP input restricted to digits, max 6
-[OK] Success routes to ProfileSetup if no firstName, else to nextPath
-[OK] Passes 'next' path through to ProfileSetup
-[OK] Loading state disables verify button
+[LOW-F5] Verify OTP flow still loses state on refresh
+- File: `src/pages/VerifyOtp.jsx`
+- Detail: depends on `location.state.phone`; refresh redirects to `/login`.
 
-[LOW-9.1] State Loss on Refresh
-  - If user refreshes /verify-otp, location.state is lost -> redirects to /login
-  - User loses position in the OTP flow
-  - Mitigation: Could persist phone in sessionStorage; minor UX inconvenience
+[LOW-F6] Profile setup redirect path state can be lost on refresh
+- File: `src/pages/ProfileSetup.jsx`
+- Detail: depends on `location.state?.next` fallback to `/`.
+
+[LOW-F7] Services fetched in bulk and filtered client-side
+- Files: `src/components/ACServicesModal.jsx`, `src/components/WaterTankServicesModal.jsx`
+- Detail: both call `/services` then filter by category on client.
+- Risk: unnecessary payload and scaling inefficiency.
+
+[INFO-F8] Payment screen remains placeholder (no online payment flow)
+- File: `src/pages/Payment.jsx`
+
+[INFO-F9] Cart is not persisted across page refresh/close
+- File: `src/context/CartContext.jsx`
 
 ================================================================================
-10. PROFILE SETUP PAGE (ProfileSetup.jsx)
+3. ACCESSIBILITY / UX FINDINGS
 ================================================================================
-[OK] Auth guard redirects to /login if not authenticated
-[OK] Name validation: letters and spaces only, proper trimming
-[OK] Updates user via API PUT /auth/profile
-[OK] Calls updateUser() to sync AuthContext
-[OK] Handles server errors gracefully
-[OK] Navigates to redirectPath after completion
+[LOW-A1] Keyboard interaction for role=button cards handles Enter only
+- File: `src/pages/Home.jsx`
+- Detail: category cards do not handle Space key activation.
 
-Issues: None
+[LOW-A2] Modal dialogs lack explicit accessibility semantics
+- Files: `src/components/ACServicesModal.jsx`, `src/components/WaterTankServicesModal.jsx`, `src/components/ProfileModal.jsx`
+- Detail: no `role="dialog"`, `aria-modal`, or explicit focus management.
 
-================================================================================
-11. PAYMENT PAGE (Payment.jsx)
-================================================================================
-[OK] Auth guard redirects to /login with 'next' state
-[OK] Reads orderId from URL params
-[OK] "Coming soon" placeholder with clear messaging
-[OK] Back to Orders button
+[LOW-A3] Modal close behavior does not include Escape key handling
+- Files: same modal components
+- Risk: weaker keyboard UX for dismissing overlays.
 
-Issues: None
+[INFO-A4] Several pages rely heavily on inline styles
+- Files: `src/pages/Orders.jsx`, `src/pages/Payment.jsx`, `src/pages/About.jsx`, `src/components/Footer.jsx`
+- Note: not broken, but maintainability/theme consistency is harder long term.
 
 ================================================================================
-12. HEADER (Header.jsx)
+4. CONFIG / DOCUMENTATION DRIFT
 ================================================================================
-[OK] Logo links to home page
-[OK] Cart badge shows distinct item count (getServiceCount)
-[OK] Dropdown menu with hover + click behavior
-[OK] Click-outside closes dropdown
-[OK] Hover timeout delay (200ms) for smooth UX
-[OK] User greeting shows firstName
-[OK] Logout clears cart + localStorage + navigates home
-[OK] Unauthenticated view shows Login text + Sign Up option
-[OK] SVG icons inline (no external dependency)
+[INFO-C1] Dependency/runtime description drift in prior report
+- Current dependency: `react-router-dom` is `^7.12.0` (`frontend/package.json`)
+- Prior audit text says scope is React Router v6.
 
-Issues: None
+[INFO-C2] Default Vite favicon still used
+- File: `frontend/index.html`
+- Detail: `<link rel="icon" ... href="/vite.svg" />`.
 
-================================================================================
-13. FOOTER (Footer.jsx)
-================================================================================
-[OK] fontFamily: 'inherit' (no hardcoded font)
-[OK] Social links conditionally rendered (instagramUrl && ...)
-[OK] Dead links (Contact, Terms, Privacy) rendered as non-clickable <span>
-[OK] "AC Services" and "Water Tank Cleaning" navigate with openModal state
-[OK] "My Orders" link navigates to /orders
-[OK] "About Us" navigates to /about
-[OK] HoverLink component handles both href and onClick
-[OK] Copyright year set to 2026
+[INFO-C3] Generic document title
+- File: `frontend/index.html`
+- Detail: title remains `uniqueofy-frontend`.
 
-Issues: None
+[INFO-C4] Footer copyright hardcoded
+- File: `src/components/Footer.jsx`
+- Detail: `2026` is static.
 
 ================================================================================
-14. CART COMPONENT (Cart.jsx)
+5. WHAT IS WORKING WELL
 ================================================================================
-[OK] Grammar: "1 item" / "N items" (singular/plural)
-[OK] "Price will be discussed" (standardized)
-[OK] Quantity selector hidden for custom services
-[OK] Quantity decrement allows 0 (triggers removal via context)
-[OK] Checkout button navigates to /cart
-[OK] Empty cart message
-
-Issues: None
+- Route-level lazy loading and suspense boundary are present.
+- Build optimization includes manual vendor chunking (`vite.config.js`).
+- Axios refresh mutex/subscriber queue is implemented and avoids duplicate refresh storms.
+- Auth, cart, and ordering flows are coherent and production-buildable.
+- CSS tokenization in `index.css` is reasonably consistent across major screens.
 
 ================================================================================
-15. SERVICE CARD (ServiceCard.jsx)
+6. ISSUE SUMMARY TABLE
 ================================================================================
-[OK] Accepts className prop for customization
-[OK] "Price will be discussed" text
-[OK] Quantity min enforced: Math.max(1, ...)
-[OK] Resets quantity to 1 after adding
-[OK] Quantity selector conditionally shown (!isCustom && showQuantity)
+MEDIUM: 6
+- L1: ErrorBoundary unused param lint error
+- L2: WaterTank modal setState-in-effect lint error
+- L3: AuthContext fast-refresh lint error
+- L4: CartContext fast-refresh lint error
+- L5: ProfileSetup unused `user` lint error
+- L6: VerifyOtp unused `isAuthenticated` lint error
 
-Issues: None
+LOW: 10
+- W1: Login hook dependency warning (complex dep expression)
+- W2: Login hook dependency warning (missing explicit dep)
+- F1: Cart stale closure update risk
+- F2: NotFound uses hard anchor reload
+- F3: Non-standard `scrollTo` behavior value
+- F4: Per-page auth redirect only (no route guard)
+- F5: VerifyOtp refresh state loss
+- F6: ProfileSetup redirect state loss on refresh
+- F7: Services over-fetched then client filtered
+- A1: Category keyboard support misses Space key
 
-================================================================================
-16. SERVICE MODALS (ACServicesModal.jsx, WaterTankServicesModal.jsx)
-================================================================================
-[OK] Both use IMAGE_MAP for local image resolution
-[OK] Both have hasFetched caching flag (prevents redundant API calls)
-[OK] Both set showQuantity={!service.isCustom}
-[OK] Both map _id -> id for cart compatibility
-[OK] AC modal passes className="ac-service-card" for sizing override
-[OK] Both filter by category and isActive
-[OK] Both sort: normal services first, Custom last
-[OK] WaterTank sorts by tank size (numeric extraction)
-[OK] Both handle loading and error states
-[OK] Fallback image logic for unmatched service names
-
-[OK] All 7 service image files are real images (3-8KB each, replaced placeholders)
-
-================================================================================
-17. PROFILE MODAL (ProfileModal.jsx)
-================================================================================
-[OK] Prevents background scrolling when open (overflow: hidden)
-[OK] Cleanup restores overflow on unmount
-[OK] Shows initials as avatar
-[OK] "Member since" uses user.createdAt with fallback to current year
-[OK] Overlay click closes modal (stopPropagation on content)
-
-Issues: None
+INFO: 7
+- F8: Payment page is placeholder
+- F9: Cart not persisted
+- A4: Heavy inline-style usage in some screens
+- C1: Router version drift vs old report text
+- C2: Default Vite favicon in production UI
+- C3: Generic document title
+- C4: Footer year hardcoded
 
 ================================================================================
-18. ERROR BOUNDARY (ErrorBoundary.jsx)
+7. DELTA VS PREVIOUS REPORT
 ================================================================================
-[OK] Class component with getDerivedStateFromError
-[OK] componentDidCatch logs error
-[OK] Friendly error message with refresh button
-[OK] Wraps entire app tree in App.jsx
-
-Issues: None
-
-================================================================================
-19. ABOUT PAGE (About.jsx)
-================================================================================
-[OK] Clean static page, no inline fontFamily
-[OK] Reachable via /about route and Footer link
-
-Issues: None
-
-================================================================================
-20. GLOBAL STYLES (index.css)
-================================================================================
-[OK] CSS custom properties at :root level
-[OK] --service-img-scale removed (was unused)
-[OK] --category-img-scale retained (used in home.css)
-[OK] .loading-spinner + @keyframes spin for Suspense fallback
-[OK] .clickable-hover utility class
-[OK] Font stack: system-ui, Avenir, Helvetica, Arial, sans-serif
-[OK] Button base styles with inherit font-family
-
-Issues: None
-
-================================================================================
-21. DELETED FILES (Verified Clean)
-================================================================================
-[OK] data/services.js -- deleted (was dead code, no imports remaining)
-[OK] components/TestEnv.jsx -- deleted (was dev artifact)
-
-================================================================================
-REMAINING ISSUES SUMMARY
-================================================================================
-
-CRITICAL: 0
-MEDIUM: 0
-
-LOW: 7
-  L-9.1:  VerifyOtp state lost on page refresh
-  L-1:    No route-level auth protection (uses per-page useEffect guards)
-  L-2:    GET /services fetched in full then filtered client-side (no ?category= param)
-  L-3:    Cart state not persisted (lost on page refresh/close)
-  L-4:    No loading skeleton / shimmer UI (plain text "Loading...")
-  L-5:    ProfileSetup state lost on refresh (location.state dependent)
-  L-6:    About page is very minimal (could be expanded with more content)
-
-INFO: 6
-  I-1:    Payment page is static placeholder (online payments not implemented)
-  I-2:    No admin-facing frontend (admin operations via API only)
-  I-3:    Footer copyright year hardcoded to 2026
-  I-4:    WaterTank modal fetches all services then filters (same as AC modal)
-  I-5:    Order list not paginated (fine for small user base)
-  I-6:    No service search or filtering UI on home page
-
-================================================================================
-COMPARISON: v2 -> v3 Changes
-================================================================================
-No code changes were made between v2 and v3 audit. The codebase remains in the
-same state as after the v2 fixes were applied. All 20 issues from v1 remain
-fixed. This report confirms the stability of the applied fixes.
-
-- v1: 3 Critical, 9 Medium, 10 Low
-- v2: 0 Critical, 1 Medium, 7 Low (after 20 fixes)
-- v3: 0 Critical, 1 Medium, 7 Low (confirmed stable, no regressions)
+Previous report stated: "No critical or blocking issues" and "Medium issues: 0".
+Current verified state:
+- Build is stable, but lint gate is failing.
+- Medium-severity engineering issues exist and are measurable.
+- Prior report should be treated as stale.
 
 ================================================================================
 END OF REPORT
