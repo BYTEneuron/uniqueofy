@@ -14,13 +14,11 @@ function normalizeUser(u) {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const navigate = useNavigate();
 
-  // Initialize from local storage
-useEffect(() => {
-  const token = localStorage.getItem('uniqueofy_access_token');
-
-  if (token) {
+  // Initialize from local storage OR attempt refresh via axios interceptor 401 handler
+  useEffect(() => {
     api.get('/auth/me')
       .then(res => {
         setUser(normalizeUser(res.data.data));
@@ -30,20 +28,25 @@ useEffect(() => {
         localStorage.removeItem('uniqueofy_access_token');
         setUser(null);
         setIsAuthenticated(false);
+      })
+      .finally(() => {
+        setIsInitializing(false);
       });
-  }
-}, []);
+  }, []);
 
   // Listen for session-expired events from axios interceptor
   useEffect(() => {
     const handleSessionExpired = () => {
       setUser(null);
       setIsAuthenticated(false);
-      navigate('/login', { replace: true });
+      // Prevent forcing unauthenticated visitors to login on initial page load
+      if (!isInitializing) {
+        navigate('/login', { replace: true });
+      }
     };
     window.addEventListener('auth:session-expired', handleSessionExpired);
     return () => window.removeEventListener('auth:session-expired', handleSessionExpired);
-  }, [navigate]);
+  }, [navigate, isInitializing]);
 
   const sendOtp = useCallback(async (phone) => {
     try {
@@ -106,6 +109,14 @@ useEffect(() => {
     logout,
     updateUser
   }), [user, isAuthenticated, sendOtp, verifyOtp, logout, updateUser]);
+
+  if (isInitializing) {
+    return (
+      <div className="loading-fallback">
+        <div className="loading-spinner" />
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={value}>
