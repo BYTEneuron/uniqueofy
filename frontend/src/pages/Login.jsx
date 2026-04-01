@@ -72,20 +72,25 @@ export default function Login() {
     setIsLoading(true)
     setError('')
 
-    const response = await sendOtp(mobile)
+    try {
+      const response = await sendOtp(mobile)
 
-    if (response.success) {
-      setIsLoading(false)
-      sessionStorage.setItem('auth_flow_phone', mobile)
-      sessionStorage.setItem('auth_flow_next', redirectPath)
-      navigate('/verify-otp', { state: { phone: mobile, next: redirectPath } })
-    } else {
-      if (response.status === 429 && response.data?.retryAfter) {
-        const retryAfter = response.data.retryAfter
-        localStorage.setItem(COOLDOWN_KEY, String(Date.now() + retryAfter * 1000))
-        setCooldown(retryAfter)
+      if (response.success) {
+        sessionStorage.setItem('auth_flow_phone', mobile)
+        sessionStorage.setItem('auth_flow_next', redirectPath)
+        navigate('/verify-otp', { state: { phone: mobile, next: redirectPath } })
+      } else {
+        if (response.status === 429 && response.data?.retryAfter) {
+          const retryAfter = response.data.retryAfter
+          localStorage.setItem(COOLDOWN_KEY, String(Date.now() + retryAfter * 1000))
+          setCooldown(retryAfter)
+        }
+        setError(response.message || 'Failed to send OTP')
       }
-      setError(response.message || 'Failed to send OTP')
+    } catch (err) {
+      const message = err.response?.data?.message || 'A network error occurred. Please try again.'
+      setError(message)
+    } finally {
       setIsLoading(false)
     }
   }

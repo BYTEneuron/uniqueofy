@@ -1,0 +1,15 @@
+.orders-explore-btn:hover {
+  background-color: #1f2937;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.orders-payment-btn:hover {
+  background-color: #15803d;
+  transform: translateY(-1px);
+}
+
+.orders-cancel-btn:hover:not(:disabled) {
+  background-color: #b91c1c;
+  transform: translateY(-1px);
+}

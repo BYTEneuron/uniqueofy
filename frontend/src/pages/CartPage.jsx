@@ -7,13 +7,11 @@ import './cartPage.css'
 
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart()
-  const { user, isAuthenticated } = useAuth()
+  const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
   const [formData, setFormData] = useState({
-    fullName: '',
-    mobile: '',
     address: '',
     date: '',
     timeSlot: '',
@@ -24,24 +22,16 @@ export default function CartPage() {
   const [submissionError, setSubmissionError] = useState(null)
   const [errors, setErrors] = useState({})
 
+  const nowUtcMs = Date.now()
+  const istOffsetMs = 5.5 * 60 * 60 * 1000
+  const oneDayMs = 24 * 60 * 60 * 1000
+  const tomorrowIstMs = nowUtcMs + istOffsetMs + oneDayMs
+  const minDateString = new Date(tomorrowIstMs).toISOString().split('T')[0]
+
   const handleChange = (e) => {
     const { name, value } = e.target
-    
-    // Custom handling based on field type
-    let processedValue = value
 
-    if (name === 'fullName') {
-      // Allow only letters and spaces, replace multiple spaces with single space (>1), prevent leading space
-      processedValue = value
-        .replace(/[^a-zA-Z ]/g, "")
-        .replace(/\s{2,}/g, " ")
-        .replace(/^\s+/g, "")
-    } else if (name === 'mobile') {
-      // Allow only numbers
-      processedValue = value.replace(/\D/g, '')
-    }
-
-    setFormData(prev => ({ ...prev, [name]: processedValue }))
+    setFormData(prev => ({ ...prev, [name]: value }))
     
     // Clear error when user types
     if (errors[name]) {
@@ -51,30 +41,12 @@ export default function CartPage() {
 
   const validate = () => {
     const newErrors = {}
-    
-    // Name validation
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Full Name is required'
-    } else if (!/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(formData.fullName.trim())) {
-      newErrors.fullName = 'Name should contain only letters'
-    }
-
-    // Mobile validation
-    if (!formData.mobile.trim()) {
-      newErrors.mobile = 'Mobile Number is required'
-    } else if (!/^[0-9]{10}$/.test(formData.mobile)) {
-      newErrors.mobile = 'Please enter a valid 10-digit Indian mobile number'
-    }
 
     if (!formData.address.trim()) newErrors.address = 'Address is required'
     if (!formData.date) {
       newErrors.date = 'Preferred Date is required'
     } else {
-      const selectedDate = new Date(formData.date)
-      const todayDate = new Date()
-      todayDate.setHours(0, 0, 0, 0)
-
-      if (selectedDate <= todayDate) {
+      if (formData.date < minDateString) {
         newErrors.date = 'Same day bookings are not allowed'
       }
     }
@@ -135,28 +107,6 @@ export default function CartPage() {
       localStorage.removeItem('pendingBookingForm')
     }
   }, [])
-
-  // Pre-fill mobile number if logged in
-  useEffect(() => {
-    if (user) {
-      setFormData(prev => ({
-        ...prev,
-        mobile: user.phone || '',
-        fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim()
-      }))
-    }
-  }, [user])
-
-  // Get tomorrow's date for min attribute
-  const getTomorrowLocal = () => {
-    const now = new Date()
-    now.setDate(now.getDate() + 1)
-    const offset = now.getTimezoneOffset()
-    const local = new Date(now.getTime() - offset * 60 * 1000)
-    return local.toISOString().split('T')[0]
-  }
-
-  const tomorrow = getTomorrowLocal()
 
   return (
     <div className="cart-page">
@@ -228,36 +178,6 @@ export default function CartPage() {
       {/* Customer Details Section */}
       <div className="cart-page-section">
         <h3>Customer Details</h3>
-        
-        <div className="form-group">
-          <label>Full Name *</label>
-          <input
-            type="text"
-            name="fullName"
-            className="form-control"
-            value={formData.fullName}
-            onChange={handleChange}
-            disabled={!!user}
-          />
-          {errors.fullName && <div className="inline-error">{errors.fullName}</div>}
-        </div>
-
-        <div className="form-group">
-          <label>Mobile Number *</label>
-          <div className="phone-input-wrapper">
-            <span className="country-code">🇮🇳 +91</span>
-            <input
-              type="tel"
-              name="mobile"
-              maxLength="10"
-              className="form-control"
-              value={formData.mobile}
-              onChange={handleChange}
-              disabled={!!user}
-            />
-          </div>
-          {errors.mobile && <div className="inline-error">{errors.mobile}</div>}
-        </div>
 
         <div className="form-group">
           <label>Address *</label>
@@ -275,7 +195,7 @@ export default function CartPage() {
           <input
             type="date"
             name="date"
-            min={tomorrow}
+            min={minDateString}
             className="form-control"
             value={formData.date}
             onChange={handleChange}

@@ -65,9 +65,6 @@ const sendOtp = async (req, res, next) => {
       // If window expired, counters reset to defaults (1 / now)
     }
 
-    // Remove previous OTP
-    await Otp.deleteOne({ phone });
-
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     const salt = await bcrypt.genSalt(10);
@@ -75,15 +72,23 @@ const sendOtp = async (req, res, next) => {
 
     const expiryMinutes = parseInt(process.env.OTP_EXPIRY_MINUTES) || 5;
 
-    await Otp.create({
-      phone,
-      otpHash,
-      expiresAt: new Date(Date.now() + expiryMinutes * 60 * 1000),
-      attempts: 0,
-      otpRequestCount: currentRequestCount,
-      firstRequestAt: currentFirstRequestAt,
-      lastRequestAt: new Date(),
-    });
+    await Otp.findOneAndUpdate(
+      { phone },
+      {
+        $set: {
+          otpHash,
+          expiresAt: new Date(Date.now() + expiryMinutes * 60 * 1000),
+          attempts: 0,
+          otpRequestCount: currentRequestCount,
+          firstRequestAt: currentFirstRequestAt,
+          lastRequestAt: new Date(),
+        },
+      },
+      {
+        upsert: true,
+        returnDocument: 'after',
+      }
+    );
 
     await otpService.sendOtp(phone, otp);
 
@@ -189,10 +194,7 @@ const verifyOtp = async (req, res, next) => {
 const refresh = async (req, res, next) => {
   try {
     if (!req.cookies || !req.cookies.refreshToken) {
-      return res.status(401).json({
-        success: false,
-        message: 'Refresh token missing'
-      });
+      return errorResponse(res, 'Refresh token missing', 'MISSING_TOKEN', 401);
     }
 
     const oldRefreshToken = req.cookies.refreshToken;
@@ -201,14 +203,35 @@ const refresh = async (req, res, next) => {
 
     const user = await User.findById(decoded.id);
 
-    if (!user || user.refreshToken !== oldRefreshToken) {
+    const now = Date.now();
+    const matchesPrimary = !!user && user.refreshToken === oldRefreshToken;
+    const matchesPreviousInGrace =
+      !!user &&
+      user.previousRefreshToken === oldRefreshToken &&
+      user.previousTokenExpiry &&
+      now < new Date(user.previousTokenExpiry).getTime();
+
+    if (!user || (!matchesPrimary && !matchesPreviousInGrace)) {
       return errorResponse(res, 'Invalid refresh token', 'INVALID_TOKEN', 403);
     }
-
-    // Rotate refresh token
-    const newRefreshToken = generateRefreshToken(user);
     const accessToken = generateAccessToken(user);
 
+    if (matchesPreviousInGrace) {
+      // Parallel request during grace period: keep current primary token.
+      res.cookie('refreshToken', user.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      return successResponse(res, { accessToken }, 'Token refreshed');
+    }
+
+    // Standard rotation: move current token to grace slot and rotate primary.
+    const newRefreshToken = generateRefreshToken(user);
+    user.previousRefreshToken = user.refreshToken;
+    user.previousTokenExpiry = new Date(Date.now() + 30 * 1000);
     user.refreshToken = newRefreshToken;
     await user.save();
 
@@ -272,7 +295,7 @@ const logout = async (req, res, next) => {
 // ======================================================
 const getMe = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user._id).select('-refreshToken');
+    const user = await User.findById(req.user._id).select('-refreshToken -previousRefreshToken -previousTokenExpiry');
 
     return successResponse(res, user, 'User profile retrieved');
 
@@ -307,7 +330,7 @@ const updateProfile = async (req, res, next) => {
       req.user._id,
       { firstName, lastName },
       { new: true, runValidators: true }
-    ).select('-refreshToken');
+    ).select('-refreshToken -previousRefreshToken -previousTokenExpiry');
 
     if (!updatedUser) {
       return errorResponse(res, 'User not found', 'USER_NOT_FOUND', 404);

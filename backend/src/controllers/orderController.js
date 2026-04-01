@@ -37,13 +37,11 @@ const createOrder = async (req, res, next) => {
       );
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const nowUtc = new Date();
+    const nowIst = new Date(nowUtc.getTime() + (5.5 * 60 * 60 * 1000));
+    const todayIstString = nowIst.toISOString().split('T')[0];
 
-    const serviceDateObj = new Date(serviceDate);
-    serviceDateObj.setHours(0, 0, 0, 0);
-
-    if (serviceDateObj <= today) {
+    if (serviceDate <= todayIstString) {
       return errorResponse(
         res,
         'Service date must be at least tomorrow',

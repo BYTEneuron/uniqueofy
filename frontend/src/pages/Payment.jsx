@@ -1,4 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
+import '../styles/Payment.css';
 
 export default function Payment() {
   const { orderId } = useParams();
@@ -33,9 +34,9 @@ export default function Payment() {
         </p>
 
         <button
+          className="payment-action-btn"
           onClick={() => navigate('/orders')}
           style={{
-            backgroundColor: '#16a34a',
             color: 'white',
             border: 'none',
             padding: '13px 32px',
@@ -46,8 +47,6 @@ export default function Payment() {
             boxShadow: '0 4px 12px rgba(22,163,74,0.25)',
             transition: 'all 0.2s cubic-bezier(0.4,0,0.2,1)',
           }}
-          onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#15803d'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(22,163,74,0.3)'; }}
-          onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#16a34a'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(22,163,74,0.25)'; }}
         >
           Back to My Orders
         </button>

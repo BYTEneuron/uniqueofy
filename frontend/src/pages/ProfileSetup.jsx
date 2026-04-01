@@ -67,9 +67,7 @@ export default function ProfileSetup() {
         lastName: lastName.trim() 
       })
 
-      // Assuming API returns standard response wrapper like { success: true, data: user }
-      // Adjust based on your actual API response structure
-      const updatedUser = response.data.data || response.data
+      const updatedUser = response.data.data
 
       if (updateUser) {
         updateUser(updatedUser)

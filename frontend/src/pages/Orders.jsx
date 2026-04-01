@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import api from '../api/axios';
+import './orders.css';
 
 export default function Orders() {
   const { isAuthenticated } = useAuth();
@@ -12,6 +13,7 @@ export default function Orders() {
   const [error, setError] = useState(null);
   const [cancellingId, setCancellingId] = useState(null);
   const [cancelError, setCancelError] = useState(null);
+  const errorTimeoutRef = useRef(null);
 
   const handleCancel = async (order) => {
     if (!window.confirm('Are you sure you want to cancel this booking?')) return;
@@ -25,12 +27,19 @@ export default function Orders() {
         )
       );
     } catch (err) {
+      if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
       setCancelError(err.response?.data?.message || 'Failed to cancel order');
-      setTimeout(() => setCancelError(null), 5000);
+      errorTimeoutRef.current = setTimeout(() => setCancelError(null), 5000);
     } finally {
       setCancellingId(null);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -77,6 +86,7 @@ export default function Orders() {
         <h2 style={{ color: '#1a1a2e', marginBottom: '12px', fontWeight: '700' }}>You have no bookings yet.</h2>
         <p style={{ color: '#6b7280', marginBottom: '28px', fontSize: '1rem' }}>Explore our services and book your first appointment!</p>
         <button 
+          className="orders-explore-btn"
           onClick={() => navigate('/')}
           style={{
             backgroundColor: '#111827',
@@ -89,8 +99,6 @@ export default function Orders() {
             fontWeight: '600',
             transition: 'all 0.2s',
           }}
-          onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#1f2937'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'; }}
-          onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#111827'; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
         >
           Explore Services
         </button>
@@ -214,8 +222,7 @@ export default function Orders() {
                       boxShadow: '0 2px 8px rgba(22,163,74,0.25)',
                       transition: 'all 0.2s cubic-bezier(0.4,0,0.2,1)',
                     }}
-                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#15803d'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#16a34a'; e.currentTarget.style.transform = 'none'; }}
+                    className="orders-payment-btn"
                     onClick={() => navigate(`/payment/${order._id}`)}
                     >
                       Proceed to Payment
@@ -241,6 +248,7 @@ export default function Orders() {
               {order.status === 'pending_review' && (
                 <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
                   <button
+                    className="orders-cancel-btn"
                     disabled={cancellingId === order._id}
                     onClick={() => handleCancel(order)}
                     style={{
@@ -256,8 +264,6 @@ export default function Orders() {
                       transition: 'all 0.2s cubic-bezier(0.4,0,0.2,1)',
                       opacity: cancellingId === order._id ? 0.7 : 1,
                     }}
-                    onMouseOver={(e) => { if (cancellingId !== order._id) { e.currentTarget.style.backgroundColor = '#b91c1c'; e.currentTarget.style.transform = 'translateY(-1px)'; } }}
-                    onMouseOut={(e) => { if (cancellingId !== order._id) { e.currentTarget.style.backgroundColor = '#dc2626'; e.currentTarget.style.transform = 'none'; } }}
                   >
                     {cancellingId === order._id ? 'Cancelling...' : 'Cancel Booking'}
                   </button>
