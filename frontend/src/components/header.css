@@ -1,10 +1,17 @@
 .site-header {
-  padding: 16px 24px;
-  background: white;
-  border-bottom: 1px solid #e6e9ef;
+  padding: 14px 24px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-border);
   position: sticky;
   top: 0;
   z-index: 100;
+  transition: box-shadow var(--transition-base);
+}
+
+.site-header:hover {
+  box-shadow: var(--shadow-sm);
 }
 
 .header-content {
@@ -26,19 +33,25 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  transition: opacity var(--transition-fast);
+}
+
+.header-logo:hover {
+  opacity: 0.85;
+  text-decoration: none;
 }
 
 .brand-logo {
-  height: 32px;
+  height: 34px;
   width: auto;
   transform: scale(var(--logo-scale));
 }
 
 .logo-text {
-  font-weight: 700;
-  color: #000000;
+  font-weight: 800;
+  color: var(--color-primary);
   font-size: 1.3rem;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   display: flex;
   align-items: center;
 }
@@ -46,23 +59,26 @@
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 20px;
 }
 
 .header-btn {
   background: none;
-  border: 1px solid #000000;
-  color: #000000;
-  padding: 8px 16px;
-  border-radius: 6px;
+  border: 1.5px solid var(--color-primary);
+  color: var(--color-primary);
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all var(--transition-base);
 }
 
 .header-btn:hover {
-  background: #000000;
+  background: var(--color-primary);
   color: white;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 /* User Dropdown Styles */
@@ -81,30 +97,32 @@
   min-width: 100px;
 }
 
-/* Logged in state: just icon, cleaner var */
+/* Logged in state */
 .login-btn.logged-in {
   min-width: auto;
   border: 1px solid transparent; 
   padding: 8px 12px;
+  border-radius: var(--radius-sm);
 }
 
 .login-btn.logged-in:hover {
-  background: #f5f5f5;
-  color: #000;
-  border-color: #e0e0e0;
+  background: var(--color-surface-secondary);
+  color: var(--color-primary);
+  border-color: var(--color-border);
 }
 
 .dropdown-menu {
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
-  width: 240px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  width: 250px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xl);
   padding: 8px 0;
-  border: 1px solid #eee;
+  border: 1px solid var(--color-border);
   z-index: 1000;
+  animation: slideUp 0.2s ease-out;
 }
 
 .dropdown-menu::before {
@@ -118,20 +136,23 @@
 }
 
 .dropdown-header {
-  padding: 12px 20px;
-  border-bottom: 1px solid #eee;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--color-border);
   margin-bottom: 8px;
 }
 
 .dropdown-user-label {
-  font-size: 0.8rem;
-  color: #888;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
   margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
 }
 
 .dropdown-user-name {
   font-weight: 600;
-  color: #333;
+  color: var(--color-text);
 }
 
 .dropdown-item {
@@ -140,31 +161,34 @@
   gap: 12px;
   width: 100%;
   text-align: left;
-  padding: 10px 20px;
+  padding: 11px 20px;
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 0.95rem;
-  color: #333;
-  transition: background 0.2s;
+  font-size: 0.92rem;
+  color: var(--color-text);
+  transition: all var(--transition-fast);
+  border-radius: 0;
 }
 
 .dropdown-item:hover {
-  background-color: #f8f9fa;
+  background-color: var(--color-surface-secondary);
+  color: var(--color-primary);
 }
 
 .dropdown-divider {
   height: 1px;
-  background-color: #eee;
-  margin: 8px 0;
+  background-color: var(--color-border);
+  margin: 6px 0;
 }
 
 /* Logout specific */
 .dropdown-item.text-red {
-    color: #dc2626;
+  color: var(--color-danger);
 }
 .dropdown-item.text-red:hover {
-    background-color: #fef2f2;
+  background-color: #fef2f2;
+  color: var(--color-danger-hover);
 }
 
 
@@ -180,22 +204,23 @@
   cursor: pointer;
   position: relative;
   padding: 8px;
-  border-radius: 6px;
-  transition: background 0.2s;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-base);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #000000;
+  color: var(--color-primary);
 }
 
 .cart-icon-svg {
   width: 24px;
   height: 24px;
-  filter: brightness(0); /* Forces icon to black */
+  filter: brightness(0);
 }
 
 .cart-icon-btn:hover {
-  background: #f0f0f0;
+  background: var(--color-surface-secondary);
+  transform: translateY(-1px);
 }
 
 /* Sign Up Header Styles */
@@ -203,36 +228,38 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--color-border);
   margin-bottom: 4px;
 }
 
 .new-customer-text {
-  font-size: 0.9rem;
-  color: #333;
+  font-size: 0.88rem;
+  color: var(--color-text);
   font-weight: 500;
 }
 
 .signup-link-btn {
   background: none;
   border: none;
-  color: #2874f0;
-  font-weight: 600;
+  color: var(--color-accent);
+  font-weight: 700;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   padding: 0;
+  transition: color var(--transition-fast);
 }
 
 .signup-link-btn:hover {
   text-decoration: underline;
+  color: var(--color-accent-hover);
 }
 
 .cart-badge {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  background: #ff4444;
+  top: 2px;
+  right: 2px;
+  background: var(--color-danger);
   color: white;
   border-radius: 50%;
   width: 20px;
@@ -240,13 +267,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.7rem;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
 }
 
 .cart-total {
-  font-weight: 600;
-  color: #000000;
+  font-weight: 700;
+  color: var(--color-primary);
   font-size: 0.95rem;
   white-space: nowrap;
 }

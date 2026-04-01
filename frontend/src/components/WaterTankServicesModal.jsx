@@ -39,20 +39,22 @@ export default function WaterTankServicesModal({ isOpen, onClose }) {
   useEffect(() => {
     if (!isOpen || hasFetched) return
 
-    setLoading(true)
-    api.get('/services')
-      .then(res => {
-          const allServices = res.data.data || []
-          const filtered = allServices.filter(s => s.category === 'water_tank'&& s.isActive !== false)
-          setServices(filtered)
-          setHasFetched(true)
-          setLoading(false)
-      })
-      .catch(err => {
-          console.error("Failed to fetch services", err)
-          setError("Failed to load services")
-          setLoading(false)
-      })
+    const fetchServices = async () => {
+      setLoading(true)
+      api.get('/services?category=water_tank')
+        .then(res => {
+            setServices(res.data.data || [])
+            setHasFetched(true)
+            setLoading(false)
+        })
+        .catch(err => {
+            console.error("Failed to fetch services", err)
+            setError("Failed to load services")
+            setLoading(false)
+        })
+    }
+
+    fetchServices()
   }, [isOpen, hasFetched])
 
   if (!isOpen) return null
@@ -91,7 +93,6 @@ export default function WaterTankServicesModal({ isOpen, onClose }) {
                     key={service._id}
                     service={{
                         ...service,
-                        id: service._id,
                         image: getServiceImage(service)
                     }}
                     showQuantity={!service.isCustom}

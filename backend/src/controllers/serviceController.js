@@ -6,8 +6,18 @@ const { successResponse, errorResponse } = require('../utils/responseFormatter')
 // @access  Public
 const getServices = async (req, res, next) => {
   try {
+    const filter = { isActive: true };
+    const allowedCategories = ['ac', 'water_tank'];
+    
+    if (req.query.category) {
+      const category = req.query.category.trim().toLowerCase();
+      if (allowedCategories.includes(category)) {
+        filter.category = category;
+      }
+    }
+
     const services = await Service
-      .find({ isActive: true })
+      .find(filter)
       .sort({ category: 1, createdAt: 1 });
       
     successResponse(res, services, 'Services retrieved');

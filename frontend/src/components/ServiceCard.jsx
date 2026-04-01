@@ -1,4 +1,4 @@
-import { useCart } from '../context/CartContext'
+import { useCart } from '../context/useCart'
 import './serviceCard.css'
 
 export default function ServiceCard({

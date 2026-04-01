@@ -18,30 +18,37 @@ function Log-Result {
 
 Write-Host "`n🚀 STARTING BACKEND QA SUITE...`n" -ForegroundColor Cyan
 
+function Request-OtpLogin {
+    param(
+        [string]$Phone,
+        [string]$Label
+    )
+
+    try {
+        Invoke-RestMethod -Uri "$BaseUrl/auth/send-otp" -Method Post -Body (@{ phone = $Phone } | ConvertTo-Json) -ContentType "application/json" | Out-Null
+        $otp = Read-Host "Enter OTP for $Label ($Phone)"
+        $loginRes = Invoke-RestMethod -Uri "$BaseUrl/auth/verify-otp" -Method Post -Body (@{ phone = $Phone; otp = $otp } | ConvertTo-Json) -ContentType "application/json"
+        $token = $loginRes.data.accessToken
+        Log-Result "$Label Login" ($null -ne $token)
+        return $token
+    } catch {
+        Log-Result "$Label Login" $false $_.Exception.Message
+        return $null
+    }
+}
+
 # --- 1. AUTHENTICATION ---
 Write-Host "--- AUTHENTICATION ---" -ForegroundColor Cyan
 
 # 1.1 Admin Login
 # NOTE: Admin must be pre-seeded in the database with role 'admin'.
 # Auto-admin promotion via phone number has been removed for security.
-try {
-    $adminRes = Invoke-RestMethod -Uri "$BaseUrl/auth/verify-otp" -Method Post -Body '{"phone":"0000000000","otp":"123456"}' -ContentType "application/json"
-    $adminToken = $adminRes.data.accessToken
-    Log-Result "Admin Login" ($null -ne $adminToken)
-} catch {
-    Log-Result "Admin Login" $false $_.Exception.Message
-    exit
-}
+$adminToken = Request-OtpLogin -Phone "0000000000" -Label "Admin"
+if (-not $adminToken) { exit }
 
 # 1.2 User Login
-try {
-    $userRes = Invoke-RestMethod -Uri "$BaseUrl/auth/verify-otp" -Method Post -Body '{"phone":"9876543210","otp":"123456"}' -ContentType "application/json"
-    $userToken = $userRes.data.accessToken
-    Log-Result "User Login" ($null -ne $userToken)
-} catch {
-    Log-Result "User Login" $false $_.Exception.Message
-    exit
-}
+$userToken = Request-OtpLogin -Phone "9876543210" -Label "User"
+if (-not $userToken) { exit }
 
 # 1.3 Invalid Login (Bad OTP)
 try {

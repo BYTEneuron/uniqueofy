@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { useCart } from '../context/CartContext'
-import { useAuth } from '../context/AuthContext'
+import { useCart } from '../context/useCart'
+import { useAuth } from '../context/useAuth'
 import api from '../api/axios'
 import './cartPage.css'
 
@@ -101,7 +101,7 @@ export default function CartPage() {
       try {
         const payload = {
           services: cart.map(item => ({
-             serviceId: item.id,
+             serviceId: item._id,
              name: item.name,
              quantity: item.quantity
           })),
@@ -174,7 +174,7 @@ export default function CartPage() {
         <h3>Services</h3>
         
         {cart.map(item => (
-          <div key={item.id} className="cart-page-item">
+          <div key={item._id} className="cart-page-item">
             <img src={item.image} alt={item.name} className="cart-item-img" />
             
             <div className="cart-item-details">
@@ -188,14 +188,14 @@ export default function CartPage() {
                 <div className="quantity-selector">
                   <button 
                     className="qty-btn"
-                    onClick={() => updateQuantity(item.id, Math.max(0, item.quantity - 1))}
+                    onClick={() => updateQuantity(item._id, Math.max(0, item.quantity - 1))}
                   >
                     −
                   </button>
                   <span className="qty-display">{item.quantity}</span>
                   <button 
                     className="qty-btn"
-                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                    onClick={() => updateQuantity(item._id, item.quantity + 1)}
                   >
                     +
                   </button>
@@ -204,7 +204,7 @@ export default function CartPage() {
               
               <button 
                 className="remove-btn" 
-                onClick={() => removeFromCart(item.id)}
+                onClick={() => removeFromCart(item._id)}
               >
                 Remove
               </button>

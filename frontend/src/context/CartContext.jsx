@@ -1,35 +1,36 @@
-import { createContext, useContext, useState, useMemo } from 'react'
+import { createContext, useState, useMemo } from 'react'
 
-const CartContext = createContext()
+// eslint-disable-next-line react-refresh/only-export-components
+export const CartContext = createContext()
 
 export function CartProvider({ children }) {
   const [cart, setCart] = useState([])
 
   const addToCart = (service, quantity = 1) => {
     // ... logic remains same, function is recreated but context value will be memoized
-    const existingItem = cart.find(item => item.id === service.id)
+    const existingItem = cart.find(item => item._id === service._id)
 
     if (existingItem) {
-      setCart(cart.map(item =>
-        item.id === service.id
+      setCart(prev => prev.map(item =>
+        item._id === service._id
           ? { ...item, quantity: item.quantity + quantity }
           : item
       ))
     } else {
-      setCart([...cart, { ...service, quantity }])
+      setCart(prev => [...prev, { ...service, quantity }])
     } 
   }
 
   const removeFromCart = (serviceId) => {
-    setCart(cart.filter(item => item.id !== serviceId))
+    setCart(prev => prev.filter(item => item._id !== serviceId))
   }
 
   const updateQuantity = (serviceId, quantity) => {
     if (quantity <= 0) {
       removeFromCart(serviceId)
     } else {
-      setCart(cart.map(item =>
-        item.id === serviceId
+      setCart(prev => prev.map(item =>
+        item._id === serviceId
           ? { ...item, quantity }
           : item
       ))
@@ -61,10 +62,3 @@ export function CartProvider({ children }) {
   )
 }
 
-export function useCart() {
-  const context = useContext(CartContext)
-  if (!context) {
-    throw new Error('useCart must be used within CartProvider')
-  }
-  return context
-}

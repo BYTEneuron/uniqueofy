@@ -7,10 +7,11 @@ const HoverLink = ({ href, children, target, rel, onClick }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   const style = {
-    color: isHovered ? '#ffffff' : '#bdbdbd',
+    color: isHovered ? '#ffffff' : '#a1a1aa',
     textDecoration: 'none',
-    transition: 'color 0.2s ease',
+    transition: 'color 0.2s cubic-bezier(0.4,0,0.2,1)',
     cursor: 'pointer',
+    fontSize: '0.95rem',
   };
 
   const handleClick = (e) => {
@@ -39,10 +40,15 @@ const SocialIconLink = ({ href, icon, alt }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   const style = {
-    display: 'inline-block',
-    transition: 'opacity 0.2s ease, transform 0.2s ease',
-    opacity: isHovered ? 1 : 0.8,
-    transform: isHovered ? 'scale(1.1)' : 'scale(1)',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '40px',
+    height: '40px',
+    borderRadius: '10px',
+    backgroundColor: isHovered ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.06)',
+    transition: 'all 0.2s cubic-bezier(0.4,0,0.2,1)',
+    transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
   };
 
   return (
@@ -54,7 +60,7 @@ const SocialIconLink = ({ href, icon, alt }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <img src={icon} alt={alt} width="24" height="24" />
+      <img src={icon} alt={alt} width="22" height="22" style={{ opacity: isHovered ? 1 : 0.75 }} />
     </a>
   );
 };
@@ -65,19 +71,22 @@ const Footer = () => {
   const facebookUrl = import.meta.env.VITE_FACEBOOK_URL || null;
 
   const footerStyle = {
-    backgroundColor: '#0f0f0f',
+    backgroundColor: '#0a0a0f',
     color: '#ffffff',
-    padding: '40px 20px 20px 20px',
+    padding: '52px 24px 28px 24px',
     fontFamily: 'inherit',
+    width: '100%',
   };
 
   const containerStyle = {
     display: 'flex',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    maxWidth: '1200px',
+    maxWidth: '1280px',
     margin: '0 auto',
-    gap: '20px',
+    gap: '32px',
+    width: '100%',
+    boxSizing: 'border-box',
   };
 
   const sectionStyle = {
@@ -86,8 +95,10 @@ const Footer = () => {
 
   const headingStyle = {
     color: '#ffffff',
-    fontSize: '1.2rem',
-    marginBottom: '15px',
+    fontSize: '1.05rem',
+    marginBottom: '18px',
+    fontWeight: '700',
+    letterSpacing: '0.02em',
   };
 
   const listStyle = {
@@ -97,22 +108,22 @@ const Footer = () => {
   };
 
   const listItemStyle = {
-    marginBottom: '10px',
+    marginBottom: '12px',
   };
 
   const dividerStyle = {
-    borderTop: '1px solid #333',
-    margin: '40px auto 20px auto',
-    maxWidth: '1200px',
+    borderTop: '1px solid rgba(255,255,255,0.08)',
+    margin: '48px auto 24px auto',
+    maxWidth: '1280px',
   };
 
   const bottomStyle = {
     textAlign: 'center',
-    color: '#bdbdbd',
-    fontSize: '0.9rem',
+    color: '#71717a',
+    fontSize: '0.85rem',
     display: 'flex',
     flexDirection: 'column',
-    gap: '8px',
+    gap: '6px',
   };
 
   return (
@@ -122,9 +133,9 @@ const Footer = () => {
           <h3 style={headingStyle}>Company</h3>
           <ul style={listStyle}>
             <li style={listItemStyle}><HoverLink onClick={() => navigate('/about')}>About Us</HoverLink></li>
-            <li style={listItemStyle}><span style={{ color: '#555', cursor: 'default' }}>Contact</span></li>
-            <li style={listItemStyle}><span style={{ color: '#555', cursor: 'default' }}>Terms & Conditions</span></li>
-            <li style={listItemStyle}><span style={{ color: '#555', cursor: 'default' }}>Privacy Policy</span></li>
+            <li style={listItemStyle}><span style={{ color: '#3f3f46', cursor: 'default', fontSize: '0.95rem' }}>Contact</span></li>
+            <li style={listItemStyle}><span style={{ color: '#3f3f46', cursor: 'default', fontSize: '0.95rem' }}>Terms & Conditions</span></li>
+            <li style={listItemStyle}><span style={{ color: '#3f3f46', cursor: 'default', fontSize: '0.95rem' }}>Privacy Policy</span></li>
           </ul>
         </div>
 

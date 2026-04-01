@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 import api from '../api/axios'
 import './auth.css'
 
@@ -10,17 +10,17 @@ export default function ProfileSetup() {
   const [loading, setLoading] = useState(false)
   const [serverError, setServerError] = useState(null)
   
-  const { user, isAuthenticated, updateUser } = useAuth()
+  const { updateUser } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const redirectPath = location.state?.next || '/'
+  const redirectPath = location.state?.next || sessionStorage.getItem('auth_flow_next') || '/'
 
-
+  // Persist the redirect intent through refresh
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login')
+    if (redirectPath && redirectPath !== '/') {
+        sessionStorage.setItem('auth_flow_next', redirectPath)
     }
-  }, [isAuthenticated, navigate])
+  }, [redirectPath])
 
   const handleNameChange = (e) => {
     const { name, value } = e.target
@@ -75,6 +75,7 @@ export default function ProfileSetup() {
         updateUser(updatedUser)
       }
 
+      sessionStorage.removeItem('auth_flow_next') // Clean up flow state
       navigate(redirectPath)
     } catch (err) {
       console.error('Profile update failed:', err)

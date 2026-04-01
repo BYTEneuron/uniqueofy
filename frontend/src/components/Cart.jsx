@@ -1,4 +1,4 @@
-import { useCart } from '../context/CartContext'
+import { useCart } from '../context/useCart'
 import { useNavigate } from 'react-router-dom'
 import './cart.css'
 import cartIcon from '../assets/icons/cart.svg'
@@ -28,7 +28,7 @@ export default function Cart() {
       
       <div className="cart-items">
         {cart.map((item) => (
-          <div key={item.id} className="cart-item">
+          <div key={item._id} className="cart-item">
             <div className="cart-item-info">
               <h4>{item.name}</h4>
               <p>Price will be discussed</p>
@@ -39,14 +39,14 @@ export default function Cart() {
                 <div className="quantity-selector">
                   <button 
                     className="qty-btn"
-                    onClick={() => updateQuantity(item.id, Math.max(0, item.quantity - 1))}
+                    onClick={() => updateQuantity(item._id, Math.max(0, item.quantity - 1))}
                   >
                     −
                   </button>
                   <span className="qty-display">{item.quantity}</span>
                   <button 
                     className="qty-btn"
-                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                    onClick={() => updateQuantity(item._id, item.quantity + 1)}
                   >
                     +
                   </button>
@@ -54,7 +54,7 @@ export default function Cart() {
               )}
               <button 
                 className="remove-btn"
-                onClick={() => removeFromCart(item.id)}
+                onClick={() => removeFromCart(item._id)}
               >
                 Remove
               </button>

@@ -1,15 +1,9 @@
-import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { createContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 
-const AuthContext = createContext();
-
-// Normalize user object so both 'id' and '_id' are always available,
-// regardless of whether the data came from verifyOtp (id) or getMe (_id).
-function normalizeUser(u) {
-  if (!u) return u;
-  return { ...u, id: u.id || u._id, _id: u._id || u.id };
-}
+// eslint-disable-next-line react-refresh/only-export-components
+export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -21,7 +15,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     api.get('/auth/me')
       .then(res => {
-        setUser(normalizeUser(res.data.data));
+        setUser(res.data.data);
         setIsAuthenticated(true);
       })
       .catch(() => {
@@ -71,11 +65,10 @@ export function AuthProvider({ children }) {
       const { accessToken, user: userData } = response.data.data;
 
       localStorage.setItem('uniqueofy_access_token', accessToken);
-      const normalized = normalizeUser(userData);
-      setUser(normalized);
+      setUser(userData);
       setIsAuthenticated(true);
 
-      return { success: true, user: normalized };
+      return { success: true, user: userData };
     } catch (error) {
       console.error('Verify OTP failed:', error);
       return { 
@@ -98,17 +91,18 @@ export function AuthProvider({ children }) {
   }, []);
 
   const updateUser = useCallback((updatedUser) => {
-  setUser(normalizeUser(updatedUser));
+  setUser(updatedUser);
   }, []);
 
   const value = useMemo(() => ({
     user,
     isAuthenticated,
+    isInitializing,
     sendOtp,
     verifyOtp,
     logout,
     updateUser
-  }), [user, isAuthenticated, sendOtp, verifyOtp, logout, updateUser]);
+  }), [user, isAuthenticated, isInitializing, sendOtp, verifyOtp, logout, updateUser]);
 
   if (isInitializing) {
     return (
@@ -123,12 +117,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
 }

@@ -17,14 +17,26 @@ export default function Home() {
   // Auto-open modal when navigated with openModal state (e.g. from Footer)
   useEffect(() => {
     const modal = location.state?.openModal
-    if (modal === 'ac') {
-      setShowACModal(true)
-    } else if (modal === 'water_tank') {
-      setShowWaterTankModal(true)
-    }
-    // Clear the state so it doesn't re-trigger on back navigation
     if (modal) {
+      // Clear the state so it doesn't re-trigger on back navigation
       navigate('/', { replace: true, state: {} })
+
+      // Scroll to services section first, then open modal after scroll completes
+      const servicesEl = document.getElementById('services-section')
+      if (servicesEl) {
+        servicesEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+
+      // Delay modal open to allow scroll to finish
+      const timer = setTimeout(() => {
+        if (modal === 'ac') {
+          setShowACModal(true)
+        } else if (modal === 'water_tank') {
+          setShowWaterTankModal(true)
+        }
+      }, 500)
+
+      return () => clearTimeout(timer)
     }
   }, [location.state, navigate])
 
@@ -39,7 +51,7 @@ export default function Home() {
       </section>
 
       {/* Service Category Cards */}
-      <section className="categories-section">
+      <section id="services-section" className="categories-section">
         <h2 className="section-heading">Select a Service</h2>
         
         <div className="category-cards-grid">

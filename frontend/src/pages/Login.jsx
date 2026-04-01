@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 import './auth.css'
 
 const COOLDOWN_KEY = 'otp_cooldown_until'
@@ -47,7 +47,7 @@ export default function Login() {
       }
     }, 1000)
     return () => clearInterval(timer)
-  }, [cooldown > 0])
+  }, [cooldown])
 
   const handleMobileChange = (e) => {
     // Only numbers
@@ -76,6 +76,8 @@ export default function Login() {
 
     if (response.success) {
       setIsLoading(false)
+      sessionStorage.setItem('auth_flow_phone', mobile)
+      sessionStorage.setItem('auth_flow_next', redirectPath)
       navigate('/verify-otp', { state: { phone: mobile, next: redirectPath } })
     } else {
       if (response.status === 429 && response.data?.retryAfter) {

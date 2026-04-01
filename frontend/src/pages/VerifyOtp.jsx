@@ -1,18 +1,24 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 import './auth.css'
 
 export default function VerifyOtp() {
   const [otp, setOtp] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const { verifyOtp, isAuthenticated } = useAuth()
+  const { verifyOtp } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   
-  const phone = location.state?.phone
-  const nextPath = location.state?.next || '/'
+  const phone = location.state?.phone || sessionStorage.getItem('auth_flow_phone')
+  const nextPath = location.state?.next || sessionStorage.getItem('auth_flow_next') || '/'
+
+  // Ensure state propagates to sessionStorage if they landed here via history navigation
+  useEffect(() => {
+    if (phone) sessionStorage.setItem('auth_flow_phone', phone)
+    if (nextPath) sessionStorage.setItem('auth_flow_next', nextPath)
+  }, [phone, nextPath])
 
   useEffect(() => {
     if (!phone) {
@@ -43,10 +49,13 @@ export default function VerifyOtp() {
     const response = await verifyOtp(phone, otp)
     
     if (response.success) {
+      sessionStorage.removeItem('auth_flow_phone') // Clear just the phone
+      
       // Check if profile is complete (firstName is a required field for profile completion)
       if (!response.user.firstName) {
         navigate('/profile-setup', { state: { next: nextPath } })
       } else {
+        sessionStorage.removeItem('auth_flow_next') // Process complete, clear fully
         navigate(nextPath, { replace: true })
       }
     } else {
@@ -71,7 +80,7 @@ export default function VerifyOtp() {
             className="auth-input"
             value={otp}
             onChange={handleOtpChange}
-            placeholder="Enter 6-digit OTP (123456)"
+            placeholder="Enter 6-digit OTP"
             style={{ textAlign: 'center', letterSpacing: '4px', fontSize: '1.2rem' }}
             maxLength="6"
             disabled={isLoading}

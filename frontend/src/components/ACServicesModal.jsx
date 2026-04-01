@@ -38,14 +38,9 @@ export default function ACServicesModal({ isOpen, onClose }) {
         setLoading(true)
         setError(null)
 
-        const res = await api.get('/services')
-        const allServices = res.data.data || []
-
-        const filtered = allServices.filter(
-          s => s.category === 'ac' && s.isActive !== false
-        )
-
-        setServices(filtered)
+        const res = await api.get('/services?category=ac')
+        
+        setServices(res.data.data || [])
         setHasFetched(true)
       } catch (err) {
         console.error('Failed to fetch services', err)
@@ -90,7 +85,6 @@ export default function ACServicesModal({ isOpen, onClose }) {
                     className="ac-service-card"
                     service={{
                       ...service,
-                      id: service._id,
                       image: getServiceImage(service)
                     }}
                     showQuantity={!service.isCustom}

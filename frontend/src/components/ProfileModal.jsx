@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
-import { useAuth } from '../context/AuthContext'
+import { createPortal } from 'react-dom'
+import { useAuth } from '../context/useAuth'
 import './profileModal.css'
 
 export default function ProfileModal({ isOpen, onClose }) {
@@ -22,7 +23,7 @@ export default function ProfileModal({ isOpen, onClose }) {
   // Get initials for avatar
   const initials = `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`.toUpperCase()
 
-  return (
+  return createPortal(
     <div className="profile-modal-overlay" onClick={onClose}>
       <div className="profile-modal-content" onClick={(e) => e.stopPropagation()}>
         
@@ -61,6 +62,7 @@ export default function ProfileModal({ isOpen, onClose }) {
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

@@ -18,3 +18,9 @@ Thumbs.db
 
 # Audit reports
 PROJECT_LOGIC_AUDIT_REPORT.txt
+
+# Non-essential files
+*.txt
+*.md
+!README.md
+

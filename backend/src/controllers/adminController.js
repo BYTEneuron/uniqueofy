@@ -8,7 +8,7 @@ const { ORDER_STATUS, TERMINAL_STATES, ALLOWED_TRANSITIONS } = require('../domai
 // @access  Private/Admin
 const getOrders = async (req, res, next) => {
   try {
-    const orders = await Order.find({}).populate('user', 'id phone firstName lastName').sort({ createdAt: -1 });
+    const orders = await Order.find({}).populate('user', '_id phone firstName lastName').sort({ createdAt: -1 });
     successResponse(res, orders, 'All orders retrieved');
   } catch (error) {
     next(error);

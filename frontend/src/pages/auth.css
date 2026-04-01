@@ -1,60 +1,72 @@
 .auth-container {
-  max-width: 450px;
-  margin: 60px auto;
-  padding: 40px 24px;
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #e6e9ef;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  max-width: 440px;
+  margin: 80px auto 40px;
+  padding: 44px 32px;
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-lg);
   text-align: center;
-  color: #213547;
+  color: var(--color-text);
+  animation: slideUp 0.4s ease-out;
 }
 
 .auth-title {
   font-size: 1.8rem;
-  margin-bottom: 32px;
-  color: #213547;
+  margin-bottom: 36px;
+  color: var(--color-text);
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 22px;
 }
 
 .auth-field label {
   display: block;
   text-align: left;
   margin-bottom: 8px;
-  font-weight: 500;
-  font-size: 0.95rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
-/* Phone Input Styling - Reusing logic from CartPage */
+/* Phone Input Styling */
 .auth-phone-wrapper {
   display: flex;
   align-items: center;
-  border: 1px solid #e6e9ef;
-  border-radius: 8px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
   overflow: hidden;
-  background: white;
+  background: var(--color-surface);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.auth-phone-wrapper:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
 }
 
 .auth-country-code {
-  background: #f8fafc;
-  padding: 12px 14px;
+  background: var(--color-surface-secondary);
+  padding: 14px 16px;
   font-size: 1rem;
-  color: #213547;
-  font-weight: 600;
-  border-right: 1px solid #e6e9ef;
+  color: var(--color-text);
+  font-weight: 700;
+  border-right: 1.5px solid var(--color-border);
 }
 
 .auth-input-tel {
   flex: 1;
-  padding: 12px;
+  padding: 14px;
   border: none;
-  background: white;
-  color: #213547;
+  background: var(--color-surface);
+  color: var(--color-text);
   outline: none;
   font-family: inherit;
   font-size: 1rem;
@@ -63,56 +75,63 @@
 /* Standard Input */
 .auth-input {
   width: 100%;
-  padding: 12px;
-  border: 1px solid #e6e9ef;
-  border-radius: 8px;
+  padding: 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
   font-size: 1rem;
-  color: #213547;
+  color: var(--color-text);
   outline: none;
-  background: white;
+  background: var(--color-surface);
   box-sizing: border-box;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.auth-input:focus,
-.auth-phone-wrapper:focus-within {
-  border-color: #000;
+.auth-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
 }
 
 .auth-helper-text {
-  margin-top: 16px;
+  margin-top: 18px;
   font-size: 0.9rem;
-  color: #666;
+  color: var(--color-text-secondary);
 }
 
 /* Buttons */
 .auth-btn {
   width: 100%;
   padding: 14px;
-  background: #000;
+  background: var(--color-primary);
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s;
-  margin-top: 10px;
+  transition: all var(--transition-base);
+  margin-top: 12px;
+  letter-spacing: 0.01em;
 }
 
 .auth-btn:hover {
-  background: #333;
+  background: var(--color-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 .auth-btn:disabled {
-  background: #ccc;
-  color: #000;
+  background: #d1d5db;
+  color: #9ca3af;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* Error Message */
 .auth-error {
-  color: #d32f2f;
-  font-size: 0.9rem;
+  color: var(--color-danger);
+  font-size: 0.88rem;
   margin-top: 8px;
   text-align: left;
+  font-weight: 500;
 }
