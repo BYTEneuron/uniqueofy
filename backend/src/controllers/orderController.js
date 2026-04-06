@@ -9,6 +9,16 @@ const { ORDER_STATUS, TERMINAL_STATES } = require('../domain/orderStatusPolicy')
  */
 const createOrder = async (req, res, next) => {
   try {
+    const isProfileIncomplete = !req.user?.firstName || !String(req.user.firstName).trim();
+    if (isProfileIncomplete) {
+      return errorResponse(
+        res,
+        'Complete your profile before creating a booking',
+        'FORBIDDEN',
+        403
+      );
+    }
+
     const { services, serviceDate, address, timeSlot, note } = req.body;
 
     if (!services || services.length === 0) {
@@ -95,6 +105,26 @@ const getMyOrders = async (req, res, next) => {
       .sort({ createdAt: -1 });
 
     return successResponse(res, orders, 'User orders retrieved successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get a single order by ID (ensuring user owns it)
+ * @route   GET /api/orders/:id
+ * @access  Private (User)
+ */
+const getOrderById = async (req, res, next) => {
+  try {
+    // Fetches order ONLY if the logged-in user owns it
+    const order = await Order.findOne({ _id: req.params.id, user: req.user._id })
+      .populate('user', 'firstName lastName phone');
+
+    if (!order) {
+      return errorResponse(res, 'Order not found or unauthorized', 'NOT_FOUND', 404);
+    }
+    return successResponse(res, order, 'Order retrieved successfully');
   } catch (error) {
     next(error);
   }
@@ -201,6 +231,7 @@ const finalizeQuote = async (req, res, next) => {
 module.exports = {
   createOrder,
   getMyOrders,
+  getOrderById,
   cancelOrder,
   finalizeQuote,
 };

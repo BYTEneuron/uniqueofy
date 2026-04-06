@@ -1,10 +1,26 @@
-import { createContext, useState, useMemo } from 'react'
+import { createContext, useState, useMemo, useEffect } from 'react'
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const CartContext = createContext()
 
 export function CartProvider({ children }) {
-  const [cart, setCart] = useState([])
+  const [cart, setCart] = useState(() => {
+    try {
+      const savedCart = localStorage.getItem('uniqueofy_cart')
+      return savedCart ? JSON.parse(savedCart) : []
+    } catch (error) {
+      console.error('Failed to load cart from localStorage:', error)
+      return []
+    }
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('uniqueofy_cart', JSON.stringify(cart))
+    } catch (error) {
+      console.error('Failed to save cart to localStorage:', error)
+    }
+  }, [cart])
 
   const addToCart = (service, quantity = 1) => {
     // ... logic remains same, function is recreated but context value will be memoized

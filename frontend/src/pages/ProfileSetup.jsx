@@ -5,12 +5,13 @@ import api from '../api/axios'
 import './auth.css'
 
 export default function ProfileSetup() {
-  const [form, setForm] = useState({ firstName: '', lastName: '' })
+  const { user, updateUser } = useAuth()
+  const [form, setForm] = useState({ firstName: user?.firstName || '', lastName: user?.lastName || '' })
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const [serverError, setServerError] = useState(null)
-  
-  const { updateUser } = useAuth()
+  const isEditing = !!user?.firstName
+
   const navigate = useNavigate()
   const location = useLocation()
   const redirectPath = location.state?.next || sessionStorage.getItem('auth_flow_next') || '/'
@@ -55,6 +56,7 @@ export default function ProfileSetup() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (loading) return
     if (!validate()) return
 
     setLoading(true)
@@ -85,54 +87,77 @@ export default function ProfileSetup() {
   }
 
   return (
-    <div className="auth-container">
-      <h1 className="auth-title">Complete Profile</h1>
-      <p style={{ color: '#666', marginBottom: '24px' }}>
-        Please enter your details to continue.
-      </p>
-      
-      {serverError && (
-        <div className="auth-error" style={{ marginBottom: '16px', textAlign: 'center' }}>
-          {serverError}
-        </div>
-      )}
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        background: 'rgba(15, 23, 42, 0.28)',
+      }}
+    >
+      <div className="auth-container" style={{ margin: 0, minHeight: 'auto' }}>
+        <h1 className="auth-title">{isEditing ? 'Edit Profile' : 'Complete Profile'}</h1>
+        <p style={{ color: '#666', marginBottom: '24px' }}>
+          Please enter your details to continue.
+        </p>
 
-      <div className="auth-form">
-        <div className="auth-field">
-          <label>First Name</label>
-          <input
-            type="text"
-            name="firstName"
-            className="auth-input"
-            value={form.firstName}
-            onChange={handleNameChange}
-            placeholder="Enter first name"
-            disabled={loading}
-          />
-          {errors.firstName && <div className="auth-error">{errors.firstName}</div>}
-        </div>
+        {serverError && (
+          <div className="auth-error" style={{ marginBottom: '16px', textAlign: 'center' }}>
+            {serverError}
+          </div>
+        )}
 
-        <div className="auth-field">
-          <label>Last Name</label>
-          <input
-            type="text"
-            name="lastName"
-            className="auth-input"
-            value={form.lastName}
-            onChange={handleNameChange}
-            placeholder="Enter last name"
-            disabled={loading}
-          />
-          {errors.lastName && <div className="auth-error">{errors.lastName}</div>}
-        </div>
+        <div className="auth-form">
+          <div className="auth-field">
+            <label>First Name</label>
+            <input
+              type="text"
+              name="firstName"
+              className="auth-input"
+              value={form.firstName}
+              onChange={handleNameChange}
+              placeholder="Enter first name"
+              disabled={loading}
+            />
+            {errors.firstName && <div className="auth-error">{errors.firstName}</div>}
+          </div>
 
-        <button 
-          className="auth-btn clickable-hover" 
-          onClick={handleSubmit}
-          disabled={loading}
-        >
-          {loading ? 'Saving...' : 'Continue to Home'}
-        </button>
+          <div className="auth-field">
+            <label>Last Name</label>
+            <input
+              type="text"
+              name="lastName"
+              className="auth-input"
+              value={form.lastName}
+              onChange={handleNameChange}
+              placeholder="Enter last name"
+              disabled={loading}
+            />
+            {errors.lastName && <div className="auth-error">{errors.lastName}</div>}
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px' }}>
+            {isEditing && (
+              <button
+                className="auth-btn clickable-hover"
+                style={{ background: '#f3f4f6', color: '#374151' }}
+                onClick={() => navigate(-1)}
+                disabled={loading}
+              >
+                Cancel
+              </button>
+            )}
+            <button className="auth-btn clickable-hover" onClick={handleSubmit} disabled={loading}>
+              {loading ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )

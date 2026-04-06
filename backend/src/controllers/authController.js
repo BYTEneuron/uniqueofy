@@ -21,7 +21,7 @@ const sendOtp = async (req, res, next) => {
 
     // Rate limit check
     const windowMinutes = parseInt(process.env.OTP_RATE_LIMIT_WINDOW) || 5;
-    const maxRequests = parseInt(process.env.OTP_RATE_LIMIT_MAX) || 3;
+    const maxRequests = Math.min(parseInt(process.env.OTP_RATE_LIMIT_MAX) || 3, 3);
     const minGapSeconds = parseInt(process.env.OTP_MIN_GAP_SECONDS) || 20;
     const existingOtp = await Otp.findOne({ phone });
 

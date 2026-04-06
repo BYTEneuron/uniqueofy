@@ -1,10 +1,13 @@
 import React, { useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/useAuth'
 import './profileModal.css'
 
 export default function ProfileModal({ isOpen, onClose }) {
   const { user } = useAuth()
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Prevent background scrolling when modal is open
   useEffect(() => {
@@ -23,12 +26,26 @@ export default function ProfileModal({ isOpen, onClose }) {
   // Get initials for avatar
   const initials = `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`.toUpperCase()
 
+  const handleEditProfile = () => {
+    onClose(); // Close the modal
+    // Pass current location so ProfileSetup knows where to send them back to
+    navigate('/profile-setup', { state: { next: location.pathname } });
+  };
+
   return createPortal(
     <div className="profile-modal-overlay" onClick={onClose}>
       <div className="profile-modal-content" onClick={(e) => e.stopPropagation()}>
         
         <div className="profile-modal-header">
-          <h2>My Profile</h2>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
+            <h2>My Profile</h2>
+            <button
+              onClick={handleEditProfile}
+              style={{ background: 'none', border: 'none', color: '#1976D2', cursor: 'pointer', fontSize: '0.9rem', textDecoration: 'underline', padding: 0 }}
+            >
+              Edit
+            </button>
+          </div>
           <button className="close-modal-btn clickable-hover" onClick={onClose}>
             &times;
           </button>

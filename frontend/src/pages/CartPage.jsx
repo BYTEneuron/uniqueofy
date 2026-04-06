@@ -57,6 +57,8 @@ export default function CartPage() {
   }
 
   const handleSubmit = async () => {
+    if (loading) return
+
     // If user is not authenticated, redirect to login
     // Note: checking isLoggedIn (from user object) or isAuthenticated (state) depending on context
     // Assuming context provides isAuthenticated as per AuthContext code read earlier
@@ -91,6 +93,16 @@ export default function CartPage() {
 
       } catch (error) {
         console.error('Order submission failed:', error)
+
+        // Intercept 403 Forbidden (Incomplete Profile)
+        if (error.response?.status === 403) {
+          // Save the form data so it's waiting for them when they return
+          localStorage.setItem('pendingBookingForm', JSON.stringify(formData));
+          // Redirect to profile setup, passing the cart path as the return destination
+          navigate('/profile-setup', { state: { next: location.pathname } });
+          return;
+        }
+
         setSubmissionError(error.response?.data?.message || 'Failed to submit order. Please try again.')
       } finally {
         setLoading(false)

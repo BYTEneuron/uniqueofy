@@ -1,11 +1,35 @@
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import api from '../api/axios';
 import '../styles/Payment.css';
 
 export default function Payment() {
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const verifyOrder = async () => {
+      try {
+        await api.get(`/orders/${orderId}`);
+        setLoading(false);
+      } catch (error) {
+        // If 404 or 403, kick them out
+        navigate('/orders', { replace: true });
+      }
+    };
+    if (orderId) verifyOrder();
+  }, [orderId, navigate]);
 
   const shortOrderId = orderId ? orderId.slice(-6).toUpperCase() : 'N/A';
+
+  if (loading) {
+    return (
+      <div className="loading-fallback">
+        <div className="loading-spinner" />
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: '600px', margin: '60px auto', padding: '0 20px', animation: 'slideUp 0.4s ease-out' }}>
