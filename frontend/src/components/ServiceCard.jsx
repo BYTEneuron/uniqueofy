@@ -38,8 +38,8 @@ export default function ServiceCard({
         )}
 
         <div className="service-card-footer">
-          <div className="service-card-price">
-            Price will be discussed
+          <div className="service-card-price" style={{ fontWeight: '700', color: '#16a34a', fontSize: '1.1rem' }}>
+            ₹{service.price}
           </div>
 
           {!service.isCustom && showQuantity && (

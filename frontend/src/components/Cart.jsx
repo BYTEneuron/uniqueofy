@@ -6,6 +6,7 @@ import cartIcon from '../assets/icons/cart.svg'
 export default function Cart() {
   const { cart, removeFromCart, updateQuantity } = useCart()
   const navigate = useNavigate()
+  const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   if (cart.length === 0) {
     return (
@@ -31,7 +32,9 @@ export default function Cart() {
           <div key={item._id} className="cart-item">
             <div className="cart-item-info">
               <h4>{item.name}</h4>
-              <p>Price will be discussed</p>
+              <div className="cart-item-price" style={{ fontWeight: '600', color: '#16a34a' }}>
+                ₹{item.price} x {item.quantity} = ₹{item.price * item.quantity}
+              </div>
             </div>
 
             <div className="cart-item-controls">
@@ -64,6 +67,9 @@ export default function Cart() {
       </div>
 
       <div className="cart-summary">
+        <div style={{ fontWeight: '700', marginBottom: '10px', color: '#1a1a2e' }}>
+          Total: <span style={{ color: '#16a34a' }}>₹{cartTotal}</span>
+        </div>
         <button className="checkout-btn" onClick={() => navigate('/cart')}>
           Proceed to Checkout
         </button>  

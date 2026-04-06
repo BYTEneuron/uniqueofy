@@ -183,21 +183,16 @@ export default function Orders() {
                 {order.services && order.services.map((item, idx) => (
                   <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.93rem', borderBottom: idx !== order.services.length - 1 ? '1px dashed #e5e7eb' : 'none', paddingBottom: idx !== order.services.length - 1 ? '8px' : '0' }}>
                     <span style={{ color: '#374151', fontWeight: '500' }}>{item.name}</span>
-                    <span style={{ color: '#6b7280', fontWeight: '600' }}><span>x {item.quantity}</span></span>
+                    <span style={{ color: '#6b7280', fontWeight: '600' }}>
+                      {item.quantity} x ₹{item.unitPrice} = ₹{item.lineTotal}
+                    </span>
                   </div>
                 ))}
               </div>
 
               <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '20px' }}>
                 {order.paymentStatus === 'paid' ? (
-                  <div style={{ 
-                    color: '#166534', 
-                    backgroundColor: '#f0fdf4', 
-                    padding: '14px 18px', 
-                    borderRadius: '10px', 
-                    fontSize: '0.93rem',
-                    border: '1px solid #bbf7d0',
-                  }}>
+                  <div style={{ color: '#166534', backgroundColor: '#f0fdf4', padding: '14px 18px', borderRadius: '10px', fontSize: '0.93rem', border: '1px solid #bbf7d0' }}>
                     <div style={{ fontWeight: '700' }}>Payment Received</div>
                     {order.paidAt && (
                       <div style={{ marginTop: '4px', color: '#16a34a', fontSize: '0.88rem' }}>
@@ -205,44 +200,21 @@ export default function Orders() {
                       </div>
                     )}
                   </div>
-                ) : order.isAmountFinalized === true && order.paymentStatus === 'unpaid' ? (
-                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                ) : (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ fontSize: '1.2rem', fontWeight: '800', color: '#1a1a2e' }}>
-                      To Pay: <span style={{ color: '#16a34a' }}><span>₹{order.finalAmount}</span></span>
+                      Total: <span style={{ color: '#16a34a' }}>₹{order.totalAmount}</span>
                     </div>
-                    <button style={{
-                      backgroundColor: '#16a34a',
-                      color: 'white',
-                      border: 'none',
-                      padding: '12px 28px',
-                      borderRadius: '10px',
-                      fontSize: '1rem',
-                      cursor: 'pointer',
-                      fontWeight: '700',
-                      boxShadow: '0 2px 8px rgba(22,163,74,0.25)',
-                      transition: 'all 0.2s cubic-bezier(0.4,0,0.2,1)',
-                    }}
-                    className="orders-payment-btn"
-                    onClick={() => navigate(`/payment/${order._id}`)}
-                    >
-                      Proceed to Payment
-                    </button>
-                   </div>
-                ) : !order.isAmountFinalized ? (
-                  <div style={{ 
-                    color: '#0369a1', 
-                    backgroundColor: '#f0f9ff', 
-                    padding: '14px 18px', 
-                    borderRadius: '10px', 
-                    fontSize: '0.93rem', 
-                    display: 'flex', 
-                    alignItems: 'center',
-                    border: '1px solid #bae6fd',
-                  }}>
-                    <span style={{ marginRight: '10px', fontSize: '1.2rem' }}>🔍</span> 
-                    Pricing will be finalized after inspection.
+                    {order.status !== 'cancelled' && (
+                      <button style={{ backgroundColor: '#16a34a', color: 'white', border: 'none', padding: '12px 28px', borderRadius: '10px', fontSize: '1rem', cursor: 'pointer', fontWeight: '700', boxShadow: '0 2px 8px rgba(22,163,74,0.25)', transition: 'all 0.2s cubic-bezier(0.4,0,0.2,1)' }}
+                        className="orders-payment-btn"
+                        onClick={() => navigate(`/payment/${order._id}`)}
+                      >
+                        Proceed to Payment
+                      </button>
+                    )}
                   </div>
-                ) : null}
+                )}
               </div>
 
               {order.status === 'pending_review' && (
@@ -294,8 +266,7 @@ function formatAddress(addr) {
 function formatStatus(status) {
   const STATUS_LABELS = {
     pending_review: 'Pending Review',
-    quote_in_progress: 'Quote In Progress',
-    quote_finalized: 'Quote Finalized',
+    confirmed: 'Confirmed',
     completed: 'Completed',
     cancelled: 'Cancelled',
   };
@@ -308,11 +279,8 @@ function getStatusColor(status) {
     case 'pending_review':
       return { bg: '#FFF3E0', text: '#EF6C00' };
 
-    case 'quote_in_progress':
+    case 'confirmed':
       return { bg: '#E3F2FD', text: '#1565C0' };
-
-    case 'quote_finalized':
-      return { bg: '#E8F5E9', text: '#2E7D32' };
 
     case 'completed':
       return { bg: '#E8F5E9', text: '#2E7D32' };

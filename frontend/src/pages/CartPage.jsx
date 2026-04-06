@@ -120,6 +120,8 @@ export default function CartPage() {
     }
   }, [])
 
+  const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
   return (
     <div className="cart-page">
       <h1 className="cart-page-title">Your Booking Request</h1>
@@ -142,7 +144,9 @@ export default function CartPage() {
             <div className="cart-item-details">
               <h4>{item.name}</h4>
               <p className="cart-item-duration">{item.duration}</p>
-              <p className="cart-item-price-placeholder">Price will be discussed</p>
+              <p className="cart-item-price" style={{ fontWeight: '600', color: '#1a1a2e' }}>
+                ₹{item.price} x {item.quantity} = ₹{item.price * item.quantity}
+              </p>
             </div>
 
             <div className="cart-item-actions">
@@ -230,6 +234,11 @@ export default function CartPage() {
           </select>
           {errors.timeSlot && <div className="inline-error">{errors.timeSlot}</div>}
         </div>
+      </div>
+
+      <div className="cart-page-section cart-total-section" style={{ borderTop: '2px solid #e5e7eb', paddingTop: '20px', marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h3 style={{ margin: 0 }}>Total Amount:</h3>
+        <h2 style={{ margin: 0, color: '#16a34a' }}>₹{cartTotal}</h2>
       </div>
 
       <div className="cart-page-footer">

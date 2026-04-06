@@ -22,6 +22,12 @@ const serviceSchema = new mongoose.Schema(
       index: true, // Faster category filtering
     },
 
+    price: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
     duration: {
       type: String,
       required: true,

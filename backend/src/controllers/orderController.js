@@ -1,4 +1,5 @@
 const Order = require('../models/Order');
+const Service = require('../models/Service');
 const { successResponse, errorResponse } = require('../utils/responseFormatter');
 const { ORDER_STATUS, TERMINAL_STATES } = require('../domain/orderStatusPolicy');
 
@@ -60,12 +61,31 @@ const createOrder = async (req, res, next) => {
       );
     }
 
-    // Map services to ensure we only store allowed fields (excluding pricing)
-    const orderItems = services.map((item) => ({
-      serviceId: item.serviceId,
-      name: item.name,
-      quantity: item.quantity || 1,
-    }));
+    // Secure Pricing Engine: Fetch active services from DB
+    const serviceIds = services.map(item => item.serviceId);
+    const dbServices = await Service.find({ _id: { $in: serviceIds }, isActive: true });
+
+    if (dbServices.length !== services.length) {
+      return errorResponse(res, 'One or more services are invalid or inactive', 'BAD_REQUEST', 400);
+    }
+
+    let computedTotalAmount = 0;
+    const orderItems = services.map((item) => {
+      const dbService = dbServices.find(s => s._id.toString() === item.serviceId);
+      const quantity = item.quantity || 1;
+      const unitPrice = dbService.price;
+      const lineTotal = unitPrice * quantity;
+
+      computedTotalAmount += lineTotal;
+
+      return {
+        serviceId: dbService._id,
+        name: dbService.name, // Trust DB name, not client name
+        quantity: quantity,
+        unitPrice: unitPrice,
+        lineTotal: lineTotal,
+      };
+    });
 
     const order = new Order({
       user: req.user._id,
@@ -73,11 +93,8 @@ const createOrder = async (req, res, next) => {
       serviceDate: new Date(serviceDate),
       address,
       timeSlot,
-      note: note || '', // Optional field
-      // status defaults to 'pending_review'
-      // finalAmount defaults to null
-      // isAmountFinalized defaults to false
-      // paymentStatus defaults to 'unpaid'
+      note: note || '',
+      totalAmount: computedTotalAmount,
     });
 
     const createdOrder = await order.save();
@@ -177,61 +194,9 @@ const cancelOrder = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Finalize order quote (Admin only)
- * @route   PUT /api/admin/orders/:id/finalize
- * @access  Private (Admin)
- */
-const finalizeQuote = async (req, res, next) => {
-  try {
-    const { finalAmount } = req.body;
-
-    if (!finalAmount || isNaN(finalAmount) || Number(finalAmount) <= 0) {
-      return errorResponse(
-        res,
-        'Final amount is required',
-        'BAD_REQUEST',
-        400
-      );
-    }
-
-    const order = await Order.findById(req.params.id);
-
-    if (!order) {
-      return errorResponse(res, 'Order not found', 'NOT_FOUND', 404);
-    }
-
-    // Terminal state protection
-    if (TERMINAL_STATES.includes(order.status)) {
-      return errorResponse(res, 'Order in terminal state cannot be modified', 'INVALID_OPERATION', 400);
-    }
-
-    if (order.isAmountFinalized === true) {
-      return errorResponse(res, 'Order already finalized', 'INVALID_OPERATION', 400);
-    }
-
-    // Update order with final quote
-    order.finalAmount = Number(finalAmount);
-    order.isAmountFinalized = true;
-    order.status = ORDER_STATUS.QUOTE_FINALIZED;
-    order.status = order.status.toLowerCase(); // defensive normalization
-
-    const updatedOrder = await order.save();
-
-    return successResponse(
-      res,
-      updatedOrder,
-      'Order quote finalized successfully'
-    );
-  } catch (error) {
-    next(error);
-  }
-};
-
 module.exports = {
   createOrder,
   getMyOrders,
   getOrderById,
   cancelOrder,
-  finalizeQuote,
 };

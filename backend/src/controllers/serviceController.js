@@ -48,7 +48,7 @@ const getServiceById = async (req, res, next) => {
 // @access  Private/Admin
 const createService = async (req, res, next) => {
   try {
-    const { name, description, category, duration, isCustom, isActive } = req.body;
+    const { name, description, category, price, duration, isCustom, isActive } = req.body;
 
     // Check for duplicate service name
     const serviceExists = await Service.findOne({ name });
@@ -60,6 +60,7 @@ const createService = async (req, res, next) => {
       name,
       description,
       category,
+      price,
       duration,
       isCustom: isCustom || false,
       isActive: isActive ?? true,
@@ -77,7 +78,7 @@ const createService = async (req, res, next) => {
 // @access  Private/Admin
 const updateService = async (req, res, next) => {
   try {
-    const { name, description, category, duration, isCustom, isActive } = req.body;
+    const { name, description, category, price, duration, isCustom, isActive } = req.body;
     const service = await Service.findById(req.params.id);
 
     if (!service) {
@@ -95,6 +96,7 @@ const updateService = async (req, res, next) => {
     service.name = name || service.name;
     service.description = description || service.description;
     service.category = category || service.category;
+    if (price !== undefined) service.price = price;
     service.duration = duration || service.duration;
 
     if (isCustom !== undefined) service.isCustom = isCustom;
@@ -105,6 +107,52 @@ const updateService = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+/**
+ * @desc    Get all services (Active & Inactive) for Admin Dashboard
+ * @route   GET /api/admin/services
+ * @access  Private (Admin)
+ */
+const getAdminServices = async (req, res, next) => {
+  try {
+    const services = await Service.find({}).sort({ category: 1, name: 1 });
+    return successResponse(res, services, 'Admin services retrieved successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Update only the price of a service
+ * @route   PATCH /api/admin/services/:id/price
+ * @access  Private (Admin)
+ */
+const updateServicePrice = async (req, res, next) => {
+  try {
+    const { price } = req.body;
+    if (price === undefined || price < 0) {
+      return errorResponse(res, 'A valid price (0 or greater) is required', 'BAD_REQUEST', 400);
+    }
+    const service = await Service.findByIdAndUpdate(req.params.id, { price }, { new: true });
+    if (!service) return errorResponse(res, 'Service not found', 'NOT_FOUND', 404);
+    return successResponse(res, service, 'Service price updated successfully');
+  } catch (error) { next(error); }
+};
+
+/**
+ * @desc    Toggle service active/inactive status
+ * @route   PATCH /api/admin/services/:id/activate
+ * @access  Private (Admin)
+ */
+const toggleServiceActivation = async (req, res, next) => {
+  try {
+    const service = await Service.findById(req.params.id);
+    if (!service) return errorResponse(res, 'Service not found', 'NOT_FOUND', 404);
+    service.isActive = !service.isActive;
+    await service.save();
+    return successResponse(res, service, `Service is now ${service.isActive ? 'active' : 'inactive'}`);
+  } catch (error) { next(error); }
 };
 
 // @desc    Delete a service
@@ -127,6 +175,9 @@ const deleteService = async (req, res, next) => {
 
 module.exports = {
   getServices,
+  getAdminServices,
+  updateServicePrice,
+  toggleServiceActivation,
   getServiceById,
   createService,
   updateService,

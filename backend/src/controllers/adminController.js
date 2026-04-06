@@ -87,22 +87,12 @@ const markOrderAsPaid = async (req, res, next) => {
       return errorResponse(res, 'Order in terminal state cannot be modified', 'INVALID_OPERATION', 400);
     }
 
-    if (order.isAmountFinalized !== true) {
-      return errorResponse(
-        res,
-        'Quote not finalized yet',
-        'INVALID_OPERATION',
-        400
-      );
+    if (order.status !== 'confirmed') {
+      return errorResponse(res, 'Only confirmed orders can be marked as paid', 'INVALID_OPERATION', 400);
     }
 
-    if (!order.finalAmount || order.finalAmount <= 0) {
-      return errorResponse(
-        res,
-        'Final amount not set',
-        'INVALID_OPERATION',
-        400
-      );
+    if (order.totalAmount <= 0) {
+      return errorResponse(res, 'Order total is zero or invalid', 'INVALID_OPERATION', 400);
     }
 
     if (order.paymentStatus === 'paid') {
@@ -131,40 +121,11 @@ const markOrderAsCompleted = async (req, res, next) => {
       return errorResponse(res, 'Order not found', 'NOT_FOUND', 404);
     }
 
-    if (order.status === ORDER_STATUS.CANCELLED) {
-      return errorResponse(
-        res,
-        'Cannot complete cancelled order',
-        'INVALID_OPERATION',
-        400
-      );
+    if (order.status !== 'confirmed') {
+      return errorResponse(res, 'Only confirmed orders can be marked as completed', 'INVALID_OPERATION', 400);
     }
-
-    if (order.status === ORDER_STATUS.COMPLETED) {
-      return errorResponse(
-        res,
-        'Order already completed',
-        'INVALID_OPERATION',
-        400
-      );
-    }
-
-    if (order.isAmountFinalized !== true) {
-      return errorResponse(
-        res,
-        'Quote not finalized',
-        'INVALID_OPERATION',
-        400
-      );
-    }
-
     if (order.paymentStatus !== 'paid') {
-      return errorResponse(
-        res,
-        'Payment not completed',
-        'INVALID_OPERATION',
-        400
-      );
+      return errorResponse(res, 'Order must be paid before it can be completed', 'INVALID_OPERATION', 400);
     }
 
     order.status = ORDER_STATUS.COMPLETED;

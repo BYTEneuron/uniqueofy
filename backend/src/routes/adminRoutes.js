@@ -6,8 +6,11 @@ const {
   markOrderAsPaid,
   markOrderAsCompleted,
 } = require('../controllers/adminController');
-
-const { finalizeQuote } = require('../controllers/orderController');
+const {
+  getAdminServices,
+  updateServicePrice,
+  toggleServiceActivation,
+} = require('../controllers/serviceController');
 
 const { protect } = require('../middleware/authMiddleware');
 const authorize = require('../middleware/authorize');
@@ -28,8 +31,6 @@ router.get('/orders', getOrders);
 // Admin updates generic order status (existing logic)
 router.put('/orders/:id/status', updateOrderStatus);
 
-// 🔥 Admin finalizes pricing (new production flow)
-router.put('/orders/:id/finalize', finalizeQuote);
 
 router.put('/orders/:id/mark-paid', markOrderAsPaid);
 
@@ -39,6 +40,10 @@ router.put('/orders/:id/complete', markOrderAsCompleted);
 // ======================================================
 // Admin User Management
 // ======================================================
+router.get('/services', getAdminServices);
+router.patch('/services/:id/price', updateServicePrice);
+router.patch('/services/:id/activate', toggleServiceActivation);
+
 router.get('/users', getUsers);
 
 module.exports = router;
