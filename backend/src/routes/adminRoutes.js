@@ -3,9 +3,19 @@ const {
   getOrders,
   updateOrderStatus,
   getUsers,
+  markOrderAsPaid,
+  markOrderAsCompleted,
 } = require('../controllers/adminController');
-
-const { finalizeQuote } = require('../controllers/orderController');
+const {
+  getAdminServices,
+  updateServicePrice,
+  toggleServiceActivation,
+} = require('../controllers/serviceController');
+const {
+  getAnalyticsSummary,
+  getOrderTrends,
+  getRevenueBreakdown,
+} = require('../controllers/analyticsController');
 
 const { protect } = require('../middleware/authMiddleware');
 const authorize = require('../middleware/authorize');
@@ -26,12 +36,26 @@ router.get('/orders', getOrders);
 // Admin updates generic order status (existing logic)
 router.put('/orders/:id/status', updateOrderStatus);
 
-// 🔥 Admin finalizes pricing (new production flow)
-router.put('/orders/:id/finalize', finalizeQuote);
+
+router.put('/orders/:id/mark-paid', markOrderAsPaid);
+
+// Admin marks order as completed (new)
+router.put('/orders/:id/complete', markOrderAsCompleted);
 
 // ======================================================
 // Admin User Management
 // ======================================================
+router.get('/services', getAdminServices);
+router.patch('/services/:id/price', updateServicePrice);
+router.patch('/services/:id/activate', toggleServiceActivation);
+
 router.get('/users', getUsers);
+
+// ======================================================
+// Admin Analytics
+// ======================================================
+router.get('/analytics/summary', getAnalyticsSummary);
+router.get('/analytics/order-trends', getOrderTrends);
+router.get('/analytics/revenue-breakdown', getRevenueBreakdown);
 
 module.exports = router;

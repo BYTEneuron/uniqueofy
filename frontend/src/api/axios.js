@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:5000/api';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -87,7 +87,8 @@ api.interceptors.response.use(
 
         localStorage.removeItem('uniqueofy_access_token');
 
-        window.location.href = '/login';
+        // Dispatch event so AuthContext can handle the redirect gracefully
+        window.dispatchEvent(new Event('auth:session-expired'));
 
         return Promise.reject(refreshError);
       } finally {

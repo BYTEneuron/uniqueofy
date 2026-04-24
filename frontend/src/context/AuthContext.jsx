@@ -1,34 +1,48 @@
-import { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { createContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 
-const AuthContext = createContext();
+// eslint-disable-next-line react-refresh/only-export-components
+export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const navigate = useNavigate();
 
-  // Initialize from local storage
-useEffect(() => {
-  const token = localStorage.getItem('uniqueofy_access_token');
-
-  if (token) {
-    setIsAuthenticated(true);
-
+  // Initialize from local storage OR attempt refresh via axios interceptor 401 handler
+  useEffect(() => {
     api.get('/auth/me')
       .then(res => {
         setUser(res.data.data);
+        setIsAuthenticated(true);
       })
       .catch(() => {
         localStorage.removeItem('uniqueofy_access_token');
         setUser(null);
         setIsAuthenticated(false);
+      })
+      .finally(() => {
+        setIsInitializing(false);
       });
-  }
-}, []);
+  }, []);
 
+  // Listen for session-expired events from axios interceptor
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      setUser(null);
+      setIsAuthenticated(false);
+      // Prevent forcing unauthenticated visitors to login on initial page load
+      if (!isInitializing) {
+        navigate('/login', { replace: true });
+      }
+    };
+    window.addEventListener('auth:session-expired', handleSessionExpired);
+    return () => window.removeEventListener('auth:session-expired', handleSessionExpired);
+  }, [navigate, isInitializing]);
 
-
-  const sendOtp = async (phone) => {
+  const sendOtp = useCallback(async (phone) => {
     try {
       await api.post('/auth/send-otp', { phone });
       return { success: true };
@@ -42,9 +56,9 @@ useEffect(() => {
         data: error.response?.data?.data || null,
       };
     }
-  };
+  }, []);
 
-  const verifyOtp = async (phone, otp) => {
+  const verifyOtp = useCallback(async (phone, otp) => {
     try {
       const response = await api.post('/auth/verify-otp', { phone, otp });
       // Backend returns: { success: true, message: '...', data: { accessToken, user } }
@@ -62,9 +76,9 @@ useEffect(() => {
         message: error.response?.data?.message || 'Failed to verify OTP' 
       };
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await api.post('/auth/logout');
     } catch (error) {
@@ -74,32 +88,33 @@ useEffect(() => {
       setUser(null);
       setIsAuthenticated(false);
     }
-  };
+  }, []);
 
-  const updateUser = (updatedUser) => {
+  const updateUser = useCallback((updatedUser) => {
   setUser(updatedUser);
-  };
+  }, []);
 
   const value = useMemo(() => ({
     user,
     isAuthenticated,
+    isInitializing,
     sendOtp,
     verifyOtp,
     logout,
     updateUser
-  }), [user, isAuthenticated]);
+  }), [user, isAuthenticated, isInitializing, sendOtp, verifyOtp, logout, updateUser]);
+
+  if (isInitializing) {
+    return (
+      <div className="loading-fallback">
+        <div className="loading-spinner" />
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
 }

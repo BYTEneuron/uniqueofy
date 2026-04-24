@@ -1,7 +1,11 @@
 const consoleProvider = require('./consoleProvider');
 
 const sendOtp = async (phone, otp) => {
-  const mode = process.env.OTP_DELIVERY_MODE || 'console';
+  const mode = process.env.OTP_DELIVERY_MODE;
+
+  if (!mode) {
+    throw new Error('OTP_DELIVERY_MODE is not set. Refusing to start OTP service.');
+  }
 
   if (mode === 'console') {
     return consoleProvider.send(phone, otp);
@@ -11,7 +15,7 @@ const sendOtp = async (phone, otp) => {
     throw new Error('SMS provider not implemented yet');
   }
 
-  throw new Error(`Invalid OTP_DELIVERY_MODE: ${mode}`);
+  throw new Error(`Unsupported OTP_DELIVERY_MODE: ${mode}`);
 };
 
 module.exports = {

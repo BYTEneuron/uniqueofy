@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useCart } from '../context/CartContext'
-import { useAuth } from '../context/AuthContext'
+import { useCart } from '../context/useCart'
+import { useAuth } from '../context/useAuth'
 import ProfileModal from './ProfileModal'
 import './header.css'
 import logo from '../assets/logos/uniqueofy-logo.svg'
@@ -15,6 +15,7 @@ export default function Header() {
   
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [showProfileModal, setShowProfileModal] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const dropdownRef = useRef(null)
   const timeoutRef = useRef(null)
 
@@ -41,12 +42,19 @@ export default function Header() {
     }, 200)
   }
 
-  const handleLogout = () => {
-    logout()
-    clearCart()
-    localStorage.removeItem('pendingBookingForm')
-    setDropdownOpen(false)
-    navigate('/')
+  const handleLogout = async () => {
+    if (isLoggingOut) return
+
+    setIsLoggingOut(true)
+    try {
+      await logout()
+      clearCart()
+      localStorage.removeItem('pendingBookingForm')
+      setDropdownOpen(false)
+      navigate('/')
+    } finally {
+      setIsLoggingOut(false)
+    }
   }
 
   const handleNavigation = (path) => {
@@ -119,7 +127,12 @@ export default function Header() {
                            
                            <div className="dropdown-divider"></div>
                            
-                           <button onClick={handleLogout} className="dropdown-item text-red">
+                           <button
+                             onClick={handleLogout}
+                             className="dropdown-item text-red"
+                             disabled={isLoggingOut}
+                             style={{ opacity: isLoggingOut ? 0.5 : 1 }}
+                           >
                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
                                Logout
                            </button>

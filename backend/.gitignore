@@ -108,3 +108,9 @@ dist
 
 # Stores VSCode settings outside the project
 .vscode/
+
+# Non-essential files
+*.txt
+*.md
+!README.md
+

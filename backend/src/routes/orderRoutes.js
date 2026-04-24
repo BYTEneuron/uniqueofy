@@ -2,6 +2,7 @@ const express = require('express');
 const {
   createOrder,
   getMyOrders,
+  getOrderById,
   cancelOrder,
 } = require('../controllers/orderController');
 
@@ -29,6 +30,8 @@ router.post(
  * @access  Private
  */
 router.get('/myorders', protect, getMyOrders);
+
+router.get('/:id', protect, getOrderById);
 
 /**
  * @route   PUT /api/orders/:id/cancel

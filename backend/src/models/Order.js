@@ -27,6 +27,14 @@ const orderSchema = new mongoose.Schema(
           default: 1,
           min: 1,
         },
+        unitPrice: {
+          type: Number,
+          required: true,
+        },
+        lineTotal: {
+          type: Number,
+          required: true,
+        },
       },
     ],
 
@@ -56,10 +64,7 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: [
         'pending_review',      // user placed booking
-        'quote_in_progress',   // admin reviewing
-        'quote_finalized',     // amount decided
-        'payment_pending',     // waiting for payment
-        'paid',                // payment done
+        'confirmed',
         'completed',
         'cancelled',
       ],
@@ -67,16 +72,9 @@ const orderSchema = new mongoose.Schema(
       index: true,
     },
 
-    // 💰 Final amount decided by admin
-    finalAmount: {
+    totalAmount: {
       type: Number,
-      default: null,
-    },
-
-    // 🔒 Whether admin finalized the amount
-    isAmountFinalized: {
-      type: Boolean,
-      default: false,
+      required: true,
     },
 
     // 💳 Payment tracking
@@ -90,10 +88,18 @@ const orderSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    completedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+orderSchema.index({ user: 1, createdAt: -1 });
+orderSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('Order', orderSchema);

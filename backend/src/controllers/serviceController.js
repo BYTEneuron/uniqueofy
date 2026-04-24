@@ -1,13 +1,26 @@
 const Service = require('../models/Service');
 const { successResponse, errorResponse } = require('../utils/responseFormatter');
+const { parseServicesQuery } = require('../utils/adminQueryValidator');
+
+const escapeRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // @desc    Get all services
 // @route   GET /api/services
 // @access  Public
 const getServices = async (req, res, next) => {
   try {
+    const filter = { isActive: true };
+    const allowedCategories = ['ac', 'water_tank'];
+    
+    if (req.query.category) {
+      const category = req.query.category.trim().toLowerCase();
+      if (allowedCategories.includes(category)) {
+        filter.category = category;
+      }
+    }
+
     const services = await Service
-      .find({ isActive: true })
+      .find(filter)
       .sort({ category: 1, createdAt: 1 });
       
     successResponse(res, services, 'Services retrieved');
@@ -38,7 +51,7 @@ const getServiceById = async (req, res, next) => {
 // @access  Private/Admin
 const createService = async (req, res, next) => {
   try {
-    const { name, description, category, duration, isCustom, isActive } = req.body;
+    const { name, description, category, price, duration, isCustom, isActive } = req.body;
 
     // Check for duplicate service name
     const serviceExists = await Service.findOne({ name });
@@ -50,6 +63,7 @@ const createService = async (req, res, next) => {
       name,
       description,
       category,
+      price,
       duration,
       isCustom: isCustom || false,
       isActive: isActive ?? true,
@@ -67,7 +81,7 @@ const createService = async (req, res, next) => {
 // @access  Private/Admin
 const updateService = async (req, res, next) => {
   try {
-    const { name, description, category, duration, isCustom, isActive } = req.body;
+    const { name, description, category, price, duration, isCustom, isActive } = req.body;
     const service = await Service.findById(req.params.id);
 
     if (!service) {
@@ -85,6 +99,7 @@ const updateService = async (req, res, next) => {
     service.name = name || service.name;
     service.description = description || service.description;
     service.category = category || service.category;
+    if (price !== undefined) service.price = price;
     service.duration = duration || service.duration;
 
     if (isCustom !== undefined) service.isCustom = isCustom;
@@ -95,6 +110,107 @@ const updateService = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+/**
+ * @desc    Get all services (Active & Inactive) for Admin Dashboard
+ * @route   GET /api/admin/services
+ * @access  Private (Admin)
+ */
+const getAdminServices = async (req, res, next) => {
+  try {
+    const {
+      page,
+      limit,
+      category,
+      isActive,
+      search,
+      sortBy,
+      sortOrder,
+    } = parseServicesQuery(req.query);
+
+    const noQueryParams = Object.keys(req.query || {}).length === 0;
+    const filter = {};
+
+    if (category) filter.category = category;
+    if (isActive !== undefined) filter.isActive = isActive;
+    if (search) {
+      const escapedSearch = escapeRegex(search);
+      filter.$or = [
+        { name: { $regex: escapedSearch, $options: 'i' } },
+        { description: { $regex: escapedSearch, $options: 'i' } },
+      ];
+    }
+
+    const sortDirection = sortOrder === 'asc' ? 1 : -1;
+    const sortObj = sortBy ? { [sortBy]: sortDirection } : { category: 1, name: 1 };
+
+    const total = await Service.countDocuments(filter);
+    let query = Service.find(filter).sort(sortObj);
+
+    if (!noQueryParams) {
+      const skip = (page - 1) * limit;
+      query = query.skip(skip).limit(limit);
+    }
+
+    const services = await query;
+
+    const effectiveLimit = noQueryParams ? (total || 0) : limit;
+    const totalPages = noQueryParams ? (total > 0 ? 1 : 0) : Math.ceil(total / limit);
+
+    return successResponse(
+      res,
+      {
+        services,
+        pagination: {
+          total,
+          page: noQueryParams ? 1 : page,
+          limit: effectiveLimit,
+          totalPages,
+          hasNextPage: !noQueryParams && page < totalPages,
+          hasPrevPage: !noQueryParams && page > 1,
+        },
+      },
+      'Services fetched successfully'
+    );
+  } catch (error) {
+    if (error.isValidationError) {
+      return errorResponse(res, error.message, error.errorCode || 'BAD_REQUEST', 400);
+    }
+    next(error);
+  }
+};
+
+/**
+ * @desc    Update only the price of a service
+ * @route   PATCH /api/admin/services/:id/price
+ * @access  Private (Admin)
+ */
+const updateServicePrice = async (req, res, next) => {
+  try {
+    const { price } = req.body;
+    if (price === undefined || price < 0) {
+      return errorResponse(res, 'A valid price (0 or greater) is required', 'BAD_REQUEST', 400);
+    }
+    const service = await Service.findByIdAndUpdate(req.params.id, { price }, { new: true });
+    if (!service) return errorResponse(res, 'Service not found', 'NOT_FOUND', 404);
+    return successResponse(res, service, 'Service price updated successfully');
+  } catch (error) { next(error); }
+};
+
+/**
+ * @desc    Toggle service active/inactive status
+ * @route   PATCH /api/admin/services/:id/activate
+ * @access  Private (Admin)
+ */
+const toggleServiceActivation = async (req, res, next) => {
+  try {
+    const service = await Service.findById(req.params.id);
+    if (!service) return errorResponse(res, 'Service not found', 'NOT_FOUND', 404);
+    service.isActive = !service.isActive;
+    await service.save();
+    return successResponse(res, service, `Service is now ${service.isActive ? 'active' : 'inactive'}`);
+  } catch (error) { next(error); }
 };
 
 // @desc    Delete a service
@@ -117,6 +233,9 @@ const deleteService = async (req, res, next) => {
 
 module.exports = {
   getServices,
+  getAdminServices,
+  updateServicePrice,
+  toggleServiceActivation,
   getServiceById,
   createService,
   updateService,

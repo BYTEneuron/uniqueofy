@@ -17,6 +17,10 @@ const createServiceSchema = Joi.object({
     .valid('ac', 'water_tank')
     .required(),
 
+  price: Joi.number()
+    .min(0)
+    .required(),
+
   duration: Joi.string()
     .trim()
     .min(3)
@@ -43,6 +47,10 @@ const updateServiceSchema = Joi.object({
 
   category: Joi.string()
     .valid('ac', 'water_tank')
+    .optional(),
+
+  price: Joi.number()
+    .min(0)
     .optional(),
 
   duration: Joi.string()

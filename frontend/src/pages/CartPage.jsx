@@ -1,19 +1,17 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { useCart } from '../context/CartContext'
-import { useAuth } from '../context/AuthContext'
+import { useCart } from '../context/useCart'
+import { useAuth } from '../context/useAuth'
 import api from '../api/axios'
 import './cartPage.css'
 
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart()
-  const { user, isAuthenticated } = useAuth()
+  const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
   const [formData, setFormData] = useState({
-    fullName: '',
-    mobile: '',
     address: '',
     date: '',
     timeSlot: '',
@@ -24,24 +22,16 @@ export default function CartPage() {
   const [submissionError, setSubmissionError] = useState(null)
   const [errors, setErrors] = useState({})
 
+  const nowUtcMs = Date.now()
+  const istOffsetMs = 5.5 * 60 * 60 * 1000
+  const oneDayMs = 24 * 60 * 60 * 1000
+  const tomorrowIstMs = nowUtcMs + istOffsetMs + oneDayMs
+  const minDateString = new Date(tomorrowIstMs).toISOString().split('T')[0]
+
   const handleChange = (e) => {
     const { name, value } = e.target
-    
-    // Custom handling based on field type
-    let processedValue = value
 
-    if (name === 'fullName') {
-      // Allow only letters and spaces, replace multiple spaces with single space (>1), prevent leading space
-      processedValue = value
-        .replace(/[^a-zA-Z ]/g, "")
-        .replace(/\s{2,}/g, " ")
-        .replace(/^\s+/g, "")
-    } else if (name === 'mobile') {
-      // Allow only numbers
-      processedValue = value.replace(/\D/g, '')
-    }
-
-    setFormData(prev => ({ ...prev, [name]: processedValue }))
+    setFormData(prev => ({ ...prev, [name]: value }))
     
     // Clear error when user types
     if (errors[name]) {
@@ -51,31 +41,13 @@ export default function CartPage() {
 
   const validate = () => {
     const newErrors = {}
-    
-    // Name validation
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Full Name is required'
-    } else if (!/^[A-Za-z]+(?: [A-Za-z]+)*$/.test(formData.fullName.trim())) {
-      newErrors.fullName = 'Name should contain only letters'
-    }
-
-    // Mobile validation
-    if (!formData.mobile.trim()) {
-      newErrors.mobile = 'Mobile Number is required'
-    } else if (!/^[0-9]{10}$/.test(formData.mobile)) {
-      newErrors.mobile = 'Please enter a valid 10-digit Indian mobile number'
-    }
 
     if (!formData.address.trim()) newErrors.address = 'Address is required'
     if (!formData.date) {
       newErrors.date = 'Preferred Date is required'
     } else {
-      const selectedDate = new Date(formData.date)
-      const todayDate = new Date()
-      todayDate.setHours(0, 0, 0, 0)
-
-      if (selectedDate < todayDate) {
-        newErrors.date = 'Past dates are not allowed'
+      if (formData.date < minDateString) {
+        newErrors.date = 'Same day bookings are not allowed'
       }
     }
     if (!formData.timeSlot) newErrors.timeSlot = 'Please select a preferred time slot'
@@ -85,12 +57,14 @@ export default function CartPage() {
   }
 
   const handleSubmit = async () => {
+    if (loading) return
+
     // If user is not authenticated, redirect to login
     // Note: checking isLoggedIn (from user object) or isAuthenticated (state) depending on context
     // Assuming context provides isAuthenticated as per AuthContext code read earlier
     if (!isAuthenticated) { 
       localStorage.setItem('pendingBookingForm', JSON.stringify(formData))
-      navigate('/login', { state: { from: location.pathname } })
+      navigate('/login', { state: { next: location.pathname } })
       return
     }
 
@@ -101,7 +75,7 @@ export default function CartPage() {
       try {
         const payload = {
           services: cart.map(item => ({
-             serviceId: item.id,
+             serviceId: item._id,
              name: item.name,
              quantity: item.quantity
           })),
@@ -119,6 +93,16 @@ export default function CartPage() {
 
       } catch (error) {
         console.error('Order submission failed:', error)
+
+        // Intercept 403 Forbidden (Incomplete Profile)
+        if (error.response?.status === 403) {
+          // Save the form data so it's waiting for them when they return
+          localStorage.setItem('pendingBookingForm', JSON.stringify(formData));
+          // Redirect to profile setup, passing the cart path as the return destination
+          navigate('/profile-setup', { state: { next: location.pathname } });
+          return;
+        }
+
         setSubmissionError(error.response?.data?.message || 'Failed to submit order. Please try again.')
       } finally {
         setLoading(false)
@@ -136,26 +120,7 @@ export default function CartPage() {
     }
   }, [])
 
-  // Pre-fill mobile number if logged in
-  useEffect(() => {
-    if (user) {
-      setFormData(prev => ({
-        ...prev,
-        mobile: user.phone || '',
-        fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim()
-      }))
-    }
-  }, [user])
-
-  // Get today's date for min attribute
-  const getTodayLocal = () => {
-    const now = new Date()
-    const offset = now.getTimezoneOffset()
-    const local = new Date(now.getTime() - offset * 60 * 1000)
-    return local.toISOString().split('T')[0]
-  }
-
-  const today = getTodayLocal()
+  const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   return (
     <div className="cart-page">
@@ -173,13 +138,15 @@ export default function CartPage() {
         <h3>Services</h3>
         
         {cart.map(item => (
-          <div key={item.id} className="cart-page-item">
+          <div key={item._id} className="cart-page-item">
             <img src={item.image} alt={item.name} className="cart-item-img" />
             
             <div className="cart-item-details">
               <h4>{item.name}</h4>
               <p className="cart-item-duration">{item.duration}</p>
-              <p className="cart-item-price-placeholder">Price will be discussed</p>
+              <p className="cart-item-price" style={{ fontWeight: '600', color: '#1a1a2e' }}>
+                ₹{item.price} x {item.quantity} = ₹{item.price * item.quantity}
+              </p>
             </div>
 
             <div className="cart-item-actions">
@@ -187,14 +154,14 @@ export default function CartPage() {
                 <div className="quantity-selector">
                   <button 
                     className="qty-btn"
-                    onClick={() => updateQuantity(item.id, Math.max(0, item.quantity - 1))}
+                    onClick={() => updateQuantity(item._id, Math.max(0, item.quantity - 1))}
                   >
                     −
                   </button>
                   <span className="qty-display">{item.quantity}</span>
                   <button 
                     className="qty-btn"
-                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                    onClick={() => updateQuantity(item._id, item.quantity + 1)}
                   >
                     +
                   </button>
@@ -203,7 +170,7 @@ export default function CartPage() {
               
               <button 
                 className="remove-btn" 
-                onClick={() => removeFromCart(item.id)}
+                onClick={() => removeFromCart(item._id)}
               >
                 Remove
               </button>
@@ -227,36 +194,6 @@ export default function CartPage() {
       {/* Customer Details Section */}
       <div className="cart-page-section">
         <h3>Customer Details</h3>
-        
-        <div className="form-group">
-          <label>Full Name *</label>
-          <input
-            type="text"
-            name="fullName"
-            className="form-control"
-            value={formData.fullName}
-            onChange={handleChange}
-            disabled={!!user}
-          />
-          {errors.fullName && <div className="inline-error">{errors.fullName}</div>}
-        </div>
-
-        <div className="form-group">
-          <label>Mobile Number *</label>
-          <div className="phone-input-wrapper">
-            <span className="country-code">🇮🇳 +91</span>
-            <input
-              type="tel"
-              name="mobile"
-              maxLength="10"
-              className="form-control"
-              value={formData.mobile}
-              onChange={handleChange}
-              disabled={!!user}
-            />
-          </div>
-          {errors.mobile && <div className="inline-error">{errors.mobile}</div>}
-        </div>
 
         <div className="form-group">
           <label>Address *</label>
@@ -274,7 +211,7 @@ export default function CartPage() {
           <input
             type="date"
             name="date"
-            min={today}
+            min={minDateString}
             className="form-control"
             value={formData.date}
             onChange={handleChange}
@@ -297,6 +234,11 @@ export default function CartPage() {
           </select>
           {errors.timeSlot && <div className="inline-error">{errors.timeSlot}</div>}
         </div>
+      </div>
+
+      <div className="cart-page-section cart-total-section" style={{ borderTop: '2px solid #e5e7eb', paddingTop: '20px', marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h3 style={{ margin: 0 }}>Total Amount:</h3>
+        <h2 style={{ margin: 0, color: '#16a34a' }}>₹{cartTotal}</h2>
       </div>
 
       <div className="cart-page-footer">

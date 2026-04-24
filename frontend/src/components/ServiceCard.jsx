@@ -1,4 +1,4 @@
-import { useCart } from '../context/CartContext'
+import { useCart } from '../context/useCart'
 import './serviceCard.css'
 
 export default function ServiceCard({
@@ -6,6 +6,7 @@ export default function ServiceCard({
   showQuantity = false,
   quantity = 1,
   onQuantityChange,
+  className = '',
 }) {
   const { addToCart } = useCart()
 
@@ -20,7 +21,7 @@ export default function ServiceCard({
   }
 
   return (
-    <div className="service-card-modern">
+    <div className={`service-card-modern ${className}`}>
       <div className="service-image-wrapper">
         <img
           src={service.image}
@@ -37,8 +38,8 @@ export default function ServiceCard({
         )}
 
         <div className="service-card-footer">
-          <div className="service-card-price">
-            Price will be discussed
+          <div className="service-card-price" style={{ fontWeight: '700', color: '#16a34a', fontSize: '1.1rem' }}>
+            ₹{service.price}
           </div>
 
           {!service.isCustom && showQuantity && (

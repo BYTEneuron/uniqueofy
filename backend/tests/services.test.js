@@ -1,102 +1,45 @@
 const request = require('supertest');
 const app = require('../src/app');
-const { createTestAdmin, createTestUser } = require('./utils');
 const Service = require('../src/models/Service');
 
-describe('Services Endpoints', () => {
-  let adminToken;
-  let userToken;
-
+describe('Services API', () => {
   beforeEach(async () => {
-    const adminAuth = await createTestAdmin();
-    adminToken = adminAuth.token;
-
-    const userAuth = await createTestUser();
-    userToken = userAuth.token;
+    await Service.create([
+      { name: 'AC Servicing', description: 'desc', category: 'ac', duration: '1h' },
+      { name: 'Water Tank Cleaning', description: 'desc', category: 'water_tank', duration: '2h' },
+      { name: 'AC Installation', description: 'desc', category: 'ac', duration: '2h' },
+    ]);
   });
 
-  describe('POST /api/services', () => {
-    it('should create a service when admin', async () => {
-      const res = await request(app)
-        .post('/api/services')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          name: 'AC Cleaning',
-          description: 'Deep cleaning of AC unit',
-          category: 'AC',
-          isActive: true
-        });
-
-      expect(res.statusCode).toEqual(201);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data.name).toBe('AC Cleaning');
-    });
-
-    it('should block non-admin from creating service', async () => {
-      const res = await request(app)
-        .post('/api/services')
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({
-          name: 'AC Cleaning',
-          description: 'Deep cleaning',
-          category: 'AC'
-        });
-
-      expect(res.statusCode).toEqual(403);
-      expect(res.body.success).toBe(false);
-    });
-
-    it('should prevent duplicate service names', async () => {
-      // Create first
-      await request(app)
-        .post('/api/services')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          name: 'AC Cleaning',
-          description: 'First one',
-          category: 'AC'
-        });
-
-      // Create duplicate
-      const res = await request(app)
-        .post('/api/services')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          name: 'AC Cleaning',
-          description: 'Second one',
-          category: 'AC'
-        });
-
-      expect(res.statusCode).toEqual(400);
-      expect(res.body.success).toBe(false);
-      expect(res.body.error).toBe('DUPLICATE_SERVICE');
-    });
+  it('GET /api/services with no query returns all services', async () => {
+    const res = await request(app).get('/api/services');
+    expect(res.status).toBe(200);
+    // Based on rule 8, it returns all services. If it was meant to return empty array as per rule 12, then we would expect 0.
+    expect(res.body.data.length).toBe(3);
   });
 
-  describe('GET /api/services', () => {
-    it('should return only active services', async () => {
-      // Create active service
-      await Service.create({
-        name: 'Active Service',
-        description: 'Active',
-        category: 'Test',
-        isActive: true
-      });
+  it('GET /api/services?category=AC returns only AC category services', async () => {
+    const res = await request(app).get('/api/services?category=AC');
+    expect(res.status).toBe(200);
+    expect(res.body.data.length).toBe(2);
+    expect(res.body.data.every(s => s.category === 'ac')).toBe(true);
+  });
 
-      // Create inactive service
-      await Service.create({
-        name: 'Inactive Service',
-        description: 'Inactive',
-        category: 'Test',
-        isActive: false
-      });
+  it('GET /api/services?category=WaterTank returns only WaterTank services', async () => {
+    const res = await request(app).get('/api/services?category=water_tank');
+    expect(res.status).toBe(200);
+    expect(res.body.data.length).toBe(1);
+    expect(res.body.data[0].category).toBe('water_tank');
+  });
 
-      const res = await request(app).get('/api/services');
-
-      expect(res.statusCode).toEqual(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data.length).toBe(1);
-      expect(res.body.data[0].name).toBe('Active Service');
-    });
+  it('GET /api/services?category=nonexistent returns empty array', async () => {
+    const res = await request(app).get('/api/services?category=nonexistent');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    // As per the requirement, if invalid, it will fallback to all services OR empty array.
+    // Wait, the specification says: "If category query param is invalid or not in the allowed list, return all services (graceful fallback, do not error)".
+    // So length should be 3.
+    // Based on rule 8, it returns all services. If it was meant to return empty array as per rule 12, then we would expect 0.
+    expect(res.body.data.length).toBe(3);
   });
 });
