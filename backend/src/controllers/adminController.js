@@ -2,15 +2,112 @@ const Order = require('../models/Order');
 const User = require('../models/User');
 const { successResponse, errorResponse } = require('../utils/responseFormatter');
 const { ORDER_STATUS, TERMINAL_STATES, ALLOWED_TRANSITIONS } = require('../domain/orderStatusPolicy');
+const { parseOrdersQuery } = require('../utils/adminQueryValidator');
+
+const escapeRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // @desc    Get all orders
 // @route   GET /api/admin/orders
 // @access  Private/Admin
 const getOrders = async (req, res, next) => {
   try {
-    const orders = await Order.find({}).populate('user', '_id phone firstName lastName').sort({ createdAt: -1 });
-    successResponse(res, orders, 'All orders retrieved');
+    const {
+      page,
+      limit,
+      status,
+      paymentStatus,
+      serviceDateFrom,
+      serviceDateTo,
+      search,
+      sortBy,
+      sortOrder,
+    } = parseOrdersQuery(req.query);
+
+    const match = {};
+
+    if (status) match.status = status;
+    if (paymentStatus) match.paymentStatus = paymentStatus;
+    if (serviceDateFrom || serviceDateTo) {
+      match.serviceDate = {};
+      if (serviceDateFrom) match.serviceDate.$gte = serviceDateFrom;
+      if (serviceDateTo) match.serviceDate.$lte = serviceDateTo;
+    }
+
+    const escapedSearch = search ? escapeRegex(search) : null;
+    const skip = (page - 1) * limit;
+    const sortDirection = sortOrder === 'asc' ? 1 : -1;
+    const sortStage = { [sortBy]: sortDirection };
+    const noQueryParams = Object.keys(req.query || {}).length === 0;
+
+    const basePipeline = [
+      { $match: match },
+      {
+        $lookup: {
+          from: 'users',
+          let: { userId: '$user' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$_id', '$$userId'] } } },
+            { $project: { _id: 1, phone: 1, firstName: 1, lastName: 1 } },
+          ],
+          as: 'user',
+        },
+      },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+    ];
+
+    if (escapedSearch) {
+      basePipeline.push({
+        $match: {
+          $or: [
+            { 'user.phone': { $regex: escapedSearch, $options: 'i' } },
+            { 'user.firstName': { $regex: escapedSearch, $options: 'i' } },
+            { 'user.lastName': { $regex: escapedSearch, $options: 'i' } },
+            {
+              $expr: {
+                $regexMatch: {
+                  input: { $toString: '$_id' },
+                  regex: escapedSearch,
+                  options: 'i',
+                },
+              },
+            },
+          ],
+        },
+      });
+    }
+
+    const totalResult = await Order.aggregate([...basePipeline, { $count: 'total' }]);
+    const total = totalResult[0]?.total || 0;
+
+    const ordersPipeline = [...basePipeline, { $sort: sortStage }];
+    if (!noQueryParams) {
+      ordersPipeline.push({ $skip: skip }, { $limit: limit });
+    }
+
+    const orders = await Order.aggregate(ordersPipeline);
+
+    const effectiveLimit = noQueryParams ? (total || 0) : limit;
+    const totalPages = noQueryParams ? (total > 0 ? 1 : 0) : Math.ceil(total / limit);
+
+    return successResponse(
+      res,
+      {
+        orders,
+        pagination: {
+          total,
+          page: noQueryParams ? 1 : page,
+          limit: effectiveLimit,
+          totalPages,
+          hasNextPage: !noQueryParams && page < totalPages,
+          hasPrevPage: !noQueryParams && page > 1,
+        },
+      },
+      'Orders fetched successfully'
+    );
   } catch (error) {
+    if (error.isValidationError) {
+      return errorResponse(res, error.message, error.errorCode || 'BAD_REQUEST', 400);
+    }
     next(error);
   }
 };

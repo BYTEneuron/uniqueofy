@@ -11,6 +11,11 @@ const {
   updateServicePrice,
   toggleServiceActivation,
 } = require('../controllers/serviceController');
+const {
+  getAnalyticsSummary,
+  getOrderTrends,
+  getRevenueBreakdown,
+} = require('../controllers/analyticsController');
 
 const { protect } = require('../middleware/authMiddleware');
 const authorize = require('../middleware/authorize');
@@ -45,5 +50,12 @@ router.patch('/services/:id/price', updateServicePrice);
 router.patch('/services/:id/activate', toggleServiceActivation);
 
 router.get('/users', getUsers);
+
+// ======================================================
+// Admin Analytics
+// ======================================================
+router.get('/analytics/summary', getAnalyticsSummary);
+router.get('/analytics/order-trends', getOrderTrends);
+router.get('/analytics/revenue-breakdown', getRevenueBreakdown);
 
 module.exports = router;

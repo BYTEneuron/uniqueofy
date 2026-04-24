@@ -4,10 +4,12 @@ import Header from './components/Header'
 import Footer from './components/Footer'
 import { CartProvider } from './context/CartContext'
 import { AuthProvider } from './context/AuthContext'
-import { Routes, Route, Link } from 'react-router-dom'
+import { Routes, Route, Link, useLocation } from 'react-router-dom'
 import ErrorBoundary from './components/ErrorBoundary'
 import ProtectedRoute from './components/ProtectedRoute'
 import ScrollToTop from './components/ScrollToTop'
+import AdminRoute from './components/AdminRoute'
+import AdminLayout from './components/admin/AdminLayout'
 
 // Lazy Load Pages
 const Home = lazy(() => import('./pages/Home'))
@@ -17,6 +19,10 @@ const CartPage = lazy(() => import('./pages/CartPage'))
 const Login = lazy(() => import('./pages/Login'))
 const ProfileSetup = lazy(() => import('./pages/ProfileSetup'))
 const About = lazy(() => import('./pages/About'))
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
+const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'))
+const AdminServices = lazy(() => import('./pages/admin/AdminServices'))
+const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'))
 
 function NotFound() {
   return (
@@ -29,12 +35,15 @@ function NotFound() {
 }
 
 function App() {
+  const location = useLocation()
+  const isAdminRoute = location.pathname.startsWith('/admin')
+
   return (
     <ErrorBoundary>
       <AuthProvider>
         <CartProvider>
           <ScrollToTop />
-          <Header />
+            {!isAdminRoute && <Header />}
 
           <main className="app-main">
             <Suspense fallback={
@@ -50,12 +59,22 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/profile-setup" element={<ProtectedRoute><ProfileSetup /></ProtectedRoute>} />
                 <Route path="/about" element={<About />} />
+
+                  <Route path="/admin" element={<AdminRoute />}>
+                    <Route element={<AdminLayout />}>
+                      <Route index element={<AdminDashboard />} />
+                      <Route path="orders" element={<AdminOrders />} />
+                      <Route path="services" element={<AdminServices />} />
+                      <Route path="users" element={<AdminUsers />} />
+                    </Route>
+                  </Route>
+
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
           </main>
-          
-          <Footer />
+
+            {!isAdminRoute && <Footer />}
         </CartProvider>
       </AuthProvider>
     </ErrorBoundary>

@@ -1,5 +1,8 @@
 const Service = require('../models/Service');
 const { successResponse, errorResponse } = require('../utils/responseFormatter');
+const { parseServicesQuery } = require('../utils/adminQueryValidator');
+
+const escapeRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // @desc    Get all services
 // @route   GET /api/services
@@ -116,9 +119,64 @@ const updateService = async (req, res, next) => {
  */
 const getAdminServices = async (req, res, next) => {
   try {
-    const services = await Service.find({}).sort({ category: 1, name: 1 });
-    return successResponse(res, services, 'Admin services retrieved successfully');
+    const {
+      page,
+      limit,
+      category,
+      isActive,
+      search,
+      sortBy,
+      sortOrder,
+    } = parseServicesQuery(req.query);
+
+    const noQueryParams = Object.keys(req.query || {}).length === 0;
+    const filter = {};
+
+    if (category) filter.category = category;
+    if (isActive !== undefined) filter.isActive = isActive;
+    if (search) {
+      const escapedSearch = escapeRegex(search);
+      filter.$or = [
+        { name: { $regex: escapedSearch, $options: 'i' } },
+        { description: { $regex: escapedSearch, $options: 'i' } },
+      ];
+    }
+
+    const sortDirection = sortOrder === 'asc' ? 1 : -1;
+    const sortObj = sortBy ? { [sortBy]: sortDirection } : { category: 1, name: 1 };
+
+    const total = await Service.countDocuments(filter);
+    let query = Service.find(filter).sort(sortObj);
+
+    if (!noQueryParams) {
+      const skip = (page - 1) * limit;
+      query = query.skip(skip).limit(limit);
+    }
+
+    const services = await query;
+
+    const effectiveLimit = noQueryParams ? (total || 0) : limit;
+    const totalPages = noQueryParams ? (total > 0 ? 1 : 0) : Math.ceil(total / limit);
+
+    return successResponse(
+      res,
+      {
+        services,
+        pagination: {
+          total,
+          page: noQueryParams ? 1 : page,
+          limit: effectiveLimit,
+          totalPages,
+          hasNextPage: !noQueryParams && page < totalPages,
+          hasPrevPage: !noQueryParams && page > 1,
+        },
+      },
+      'Services fetched successfully'
+    );
   } catch (error) {
+    if (error.isValidationError) {
+      return errorResponse(res, error.message, error.errorCode || 'BAD_REQUEST', 400);
+    }
     next(error);
   }
 };
